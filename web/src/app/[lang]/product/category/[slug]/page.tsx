@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Breadcrumb from "@/components/Breadcrumb";
 import CategoryCard from "@/components/CategoryCard";
 import SeriesCard from "@/components/SeriesCard";
@@ -9,14 +9,15 @@ import {
   getSubCategories,
   getSeriesByCategory,
 } from "@/lib/repo";
+import { toLang, type Lang } from "@/lib/lang";
+import { absUrl, hreflangMap, localePath } from "@/lib/site";
 import type { Category, Crumb } from "@/types/product";
-import { absUrl } from "@/lib/site";
 
 export const revalidate = 60;
 const PER_PAGE = 12;
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ lang: string; slug: string }>;
   searchParams: Promise<{ page?: string }>;
 }
 
@@ -24,18 +25,28 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const cat = await getCategoryBySlug(slug);
-  if (!cat) return {};
+  const found = await getCategoryBySlug(slug, toLang((await params).lang));
+  if (!found) return {};
+  const cat = found.category;
+  const path = `/product/category/${cat.slug}`;
   return {
-    title: cat.name,
-    description: (cat.description ?? `${cat.name} from DEGSON`).slice(0, 160),
+    title: cat.seo_title ?? cat.name,
+    description: (
+      cat.seo_description ??
+      cat.description ??
+      `${cat.name} from DEGSON`
+    ).slice(0, 160),
+    alternates: {
+      canonical: absUrl(localePath(found.resolvedLang, path)),
+      languages: hreflangMap(path, found.availableLangs),
+    },
   };
 }
 
-function buildCrumbs(cat: Category): Crumb[] {
+function buildCrumbs(cat: Category, lang: Lang): Crumb[] {
   const crumbs: Crumb[] = [
-    { id: 0, title: "Home", href: "/" },
-    { id: 0, title: "Products", href: "/#products" },
+    { id: 0, title: "Home", href: localePath(lang, "/") },
+    { id: 0, title: "Products", href: localePath(lang, "/#products") },
   ];
   const parent = cat.parent_id;
   if (parent) {
@@ -44,7 +55,7 @@ function buildCrumbs(cat: Category): Crumb[] {
     crumbs.push({
       id: parent.id,
       title: parent.name,
-      href: `/product/category/${parent.slug}`,
+      href: localePath(lang, `/product/category/${parent.slug}`),
     });
   }
   crumbs.push({ id: cat.id, title: cat.name, current: true });
@@ -61,15 +72,34 @@ export default async function CategoryPage({
   params,
   searchParams,
 }: PageProps) {
-  const { slug } = await params;
-  const cat = await getCategoryBySlug(slug);
-  if (!cat) notFound();
+  const { lang: rawLang, slug } = await params;
+  const lang: Lang = toLang(rawLang);
 
-  const crumbs = buildCrumbs(cat);
+  const found = await getCategoryBySlug(slug, lang);
+  if (!found) notFound();
+
+  // slug 属于某一条翻译行 → 收敛到该行语言的 URL，避免跨语言重复内容
+  if (found.resolvedLang !== lang) {
+    redirect(localePath(found.resolvedLang, `/product/category/${slug}`));
+  }
+
+  const cat = found.category;
+  const crumbs = buildCrumbs(cat, lang);
+  const pageUrl = absUrl(localePath(lang, `/product/category/${cat.slug}`));
+
+  const jsonLdCrumb = {
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.title,
+      ...(c.href ? { item: absUrl(c.href) } : {}),
+    })),
+  };
 
   // level 1 / 2 → 子分类卡片；level 3 → 系列分页
   if (cat.level === 1 || cat.level === 2) {
-    const subs = await getSubCategories(cat.id);
+    const subs = await getSubCategories(cat.id, lang);
     const jsonLd = {
       "@context": "https://schema.org",
       "@graph": [
@@ -77,17 +107,9 @@ export default async function CategoryPage({
           "@type": "CollectionPage",
           name: cat.name,
           description: cat.description ?? `${cat.name} from DEGSON`,
-          url: absUrl(`/product/category/${cat.slug}`),
+          url: pageUrl,
         },
-        {
-          "@type": "BreadcrumbList",
-          itemListElement: crumbs.map((c, i) => ({
-            "@type": "ListItem",
-            position: i + 1,
-            name: c.title,
-            ...(c.href ? { item: absUrl(c.href) } : {}),
-          })),
-        },
+        jsonLdCrumb,
       ],
     };
 
@@ -126,7 +148,7 @@ export default async function CategoryPage({
           {subs.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {subs.map((s) => (
-                <CategoryCard key={s.id} category={s} />
+                <CategoryCard key={s.id} category={s} pageLang={lang} />
               ))}
             </div>
           ) : (
@@ -139,11 +161,11 @@ export default async function CategoryPage({
 
   // level 3 → 系列分页
   const sp = await searchParams;
-  const probe = await getSeriesByCategory(cat.id, 1, 1);
+  const probe = await getSeriesByCategory(cat.id, 1, lang, 1);
   const total = probe.total;
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const page = Math.min(Math.max(1, clampPage(sp.page)), totalPages);
-  const { items } = await getSeriesByCategory(cat.id, page, PER_PAGE);
+  const { items } = await getSeriesByCategory(cat.id, page, lang, PER_PAGE);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -151,17 +173,9 @@ export default async function CategoryPage({
       {
         "@type": "CollectionPage",
         name: cat.name,
-        url: absUrl(`/product/category/${cat.slug}`),
+        url: pageUrl,
       },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: crumbs.map((c, i) => ({
-          "@type": "ListItem",
-          position: i + 1,
-          name: c.title,
-          ...(c.href ? { item: absUrl(c.href) } : {}),
-        })),
-      },
+      jsonLdCrumb,
     ],
   };
 
@@ -185,7 +199,7 @@ export default async function CategoryPage({
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {items.map((s) => (
-                <SeriesCard key={s.id} series={s} />
+                <SeriesCard key={s.id} series={s} pageLang={lang} />
               ))}
             </div>
             <div className="mt-10">
@@ -193,7 +207,7 @@ export default async function CategoryPage({
                 page={page}
                 totalPages={totalPages}
                 total={total}
-                basePath={`/product/category/${cat.slug}`}
+                basePath={localePath(lang, `/product/category/${cat.slug}`)}
               />
             </div>
           </>

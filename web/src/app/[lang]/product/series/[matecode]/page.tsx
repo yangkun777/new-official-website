@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Breadcrumb from "@/components/Breadcrumb";
 import SeriesCard from "@/components/SeriesCard";
 import VariantTable from "@/components/VariantTable";
@@ -9,31 +9,42 @@ import {
   getVariants,
   getRelatedSeries,
 } from "@/lib/repo";
+import { toLang, type Lang } from "@/lib/lang";
+import { absUrl, hreflangMap, localePath } from "@/lib/site";
 import type { Crumb, Series } from "@/types/product";
-import { absUrl } from "@/lib/site";
 
 export const revalidate = 60;
 
 interface PageProps {
-  params: Promise<{ matecode: string }>;
+  params: Promise<{ lang: string; matecode: string }>;
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { matecode } = await params;
-  const s = await getSeriesByMatecode(matecode);
-  if (!s) return {};
+  const { lang: rawLang, matecode } = await params;
+  const found = await getSeriesByMatecode(matecode, toLang(rawLang));
+  if (!found) return {};
+  const s = found.series;
+  const path = `/product/series/${s.matecode}`;
   return {
-    title: `${s.name} Series`,
-    description: (s.description ?? `${s.name} series from DEGSON`).slice(0, 160),
+    title: s.seo_title ?? `${s.name} Series`,
+    description: (
+      s.seo_description ??
+      s.description ??
+      `${s.name} series from DEGSON`
+    ).slice(0, 160),
+    alternates: {
+      canonical: absUrl(localePath(found.resolvedLang, path)),
+      languages: hreflangMap(path, found.availableLangs),
+    },
   };
 }
 
-function buildCrumbs(s: Series): Crumb[] {
+function buildCrumbs(s: Series, lang: Lang): Crumb[] {
   const crumbs: Crumb[] = [
-    { id: 0, title: "Home", href: "/" },
-    { id: 0, title: "Products", href: "/#products" },
+    { id: 0, title: "Home", href: localePath(lang, "/") },
+    { id: 0, title: "Products", href: localePath(lang, "/#products") },
   ];
   const c3 = s.category_id;
   if (c3) {
@@ -44,13 +55,13 @@ function buildCrumbs(s: Series): Crumb[] {
       crumbs.push({
         id: l2.id,
         title: l2.name,
-        href: `/product/category/${l2.slug}`,
+        href: localePath(lang, `/product/category/${l2.slug}`),
       });
     }
     crumbs.push({
       id: c3.id,
       title: c3.name,
-      href: `/product/category/${c3.slug}`,
+      href: localePath(lang, `/product/category/${c3.slug}`),
     });
   }
   crumbs.push({ id: s.id, title: s.name, current: true });
@@ -58,16 +69,24 @@ function buildCrumbs(s: Series): Crumb[] {
 }
 
 export default async function SeriesPage({ params }: PageProps) {
-  const { matecode } = await params;
-  const series = await getSeriesByMatecode(matecode);
-  if (!series) notFound();
+  const { lang: rawLang, matecode } = await params;
+  const lang: Lang = toLang(rawLang);
 
+  const found = await getSeriesByMatecode(matecode, lang);
+  if (!found) notFound();
+
+  // matecode 与语言无关，但翻译可能缺失 → 收敛到真正有内容的语言页
+  if (found.resolvedLang !== lang) {
+    redirect(localePath(found.resolvedLang, `/product/series/${matecode}`));
+  }
+
+  const series = found.series;
   const categoryId = series.category_id?.id ?? null;
-  const [variants, related, crumbs] = await Promise.all([
+  const [variants, related] = await Promise.all([
     getVariants(series.id),
-    getRelatedSeries(categoryId, matecode, 6),
-    Promise.resolve(buildCrumbs(series)),
+    getRelatedSeries(categoryId, matecode, lang, 6),
   ]);
+  const crumbs = buildCrumbs(series, lang);
 
   const mainImage = series.image;
   const jsonLd = {
@@ -79,7 +98,7 @@ export default async function SeriesPage({ params }: PageProps) {
         sku: variants.map((v) => v.order_no).filter(Boolean),
         ...(mainImage ? { image: mainImage } : {}),
         description: series.description ?? `${series.name} series`,
-        url: absUrl(`/product/series/${series.matecode}`),
+        url: absUrl(localePath(lang, `/product/series/${series.matecode}`)),
       },
       {
         "@type": "BreadcrumbList",
@@ -140,7 +159,7 @@ export default async function SeriesPage({ params }: PageProps) {
               </h2>
               <div className="grid grid-cols-1 gap-4">
                 {related.map((r) => (
-                  <SeriesCard key={r.id} series={r} />
+                  <SeriesCard key={r.id} series={r} pageLang={lang} />
                 ))}
               </div>
             </aside>

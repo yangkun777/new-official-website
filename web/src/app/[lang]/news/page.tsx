@@ -1,23 +1,36 @@
 import type { Metadata } from "next";
 import { getNewsList } from "@/lib/repo";
+import { toLang, type Lang } from "@/lib/lang";
+import { absUrl, hreflangMap, localePath } from "@/lib/site";
 import NewsCard from "@/components/NewsCard";
 import LangSwitcher from "@/components/LangSwitcher";
 
 export const revalidate = 60;
 
 interface PageProps {
-  searchParams: Promise<{ lang?: string }>;
+  params: Promise<{ lang: string }>;
 }
 
-export const metadata: Metadata = {
-  title: "News",
-  description: "Latest updates and product news from DEGSON.",
-};
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const lang = toLang((await params).lang);
+  const isZh = lang === "zh";
+  return {
+    title: isZh ? "新闻动态" : "News",
+    description: isZh
+      ? "德昌最新动态与产品资讯。"
+      : "Latest updates and product news from DEGSON.",
+    alternates: {
+      canonical: absUrl(localePath(lang, "/news")),
+      languages: hreflangMap("/news"),
+    },
+  };
+}
 
-export default async function NewsPage({ searchParams }: PageProps) {
-  const sp = await searchParams;
-  const lang = sp.lang === "zh-CN" ? "zh-CN" : "en-US";
-  const isZh = lang === "zh-CN";
+export default async function NewsPage({ params }: PageProps) {
+  const lang: Lang = toLang((await params).lang);
+  const isZh = lang === "zh";
   const news = await getNewsList(lang);
 
   return (
@@ -34,14 +47,14 @@ export default async function NewsPage({ searchParams }: PageProps) {
                 : "Latest updates and product news from DEGSON."}
             </p>
           </div>
-          <LangSwitcher lang={lang} basePath="/news" />
+          <LangSwitcher lang={lang} path="/news" />
         </div>
       </section>
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {news.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {news.map((n) => (
-              <NewsCard key={n.id} news={n} lang={lang} />
+              <NewsCard key={n.id} news={n} pageLang={lang} />
             ))}
           </div>
         ) : (

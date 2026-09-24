@@ -1,4 +1,7 @@
-// 清洁模型类型（对应 Directus 清洁表 category / series / product / site_settings）
+// 前台视图类型：由 repo.ts 把「主表 + *_translations」拍平成页面直接可用的形状。
+// 页面不感知 translations 结构，字段名保持 name / slug / description 稳定。
+
+import type { Lang } from "@/lib/lang";
 
 export interface SiteSettings {
   id: number;
@@ -10,6 +13,7 @@ export interface SiteSettings {
   contact_email: string | null;
 }
 
+/** 面包屑用的轻量节点（name/slug 已按语言解析） */
 export interface CatLite {
   id: number;
   name: string;
@@ -17,21 +21,31 @@ export interface CatLite {
   level: number;
 }
 
-/** 分类（含父级链，用于面包屑；Directus M2O 关系字段 parent_id 深层展开） */
+/** 分类详情（含父级链，用于面包屑） */
 export interface Category extends CatLite {
   description: string | null;
+  short_description: string | null;
   image: string | null;
   sort: number;
   status: string;
+  seo_title: string | null;
+  seo_description: string | null;
   parent_id: (CatLite & { parent_id: CatLite | null }) | null;
 }
 
+/**
+ * 列表卡片条目。`lang` = 该条内容实际所属语言：
+ * 请求语言有翻译时等于请求语言；回退到 en 时等于 en，
+ * 卡片据此把链接指向真正有内容的语言页（PRD §6.4，避免空壳页）。
+ */
 export interface SubCategoryCard {
   id: number;
   name: string;
   slug: string;
   image: string | null;
   description: string | null;
+  lang: Lang;
+  fallback: boolean;
 }
 
 export interface SeriesListItem {
@@ -40,6 +54,8 @@ export interface SeriesListItem {
   matecode: string;
   image: string | null;
   description: string | null;
+  lang: Lang;
+  fallback: boolean;
 }
 
 export interface Series {
@@ -47,24 +63,30 @@ export interface Series {
   name: string;
   matecode: string;
   description: string | null;
+  short_description: string | null;
   image: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   category_id: {
     id: number;
     name: string;
     slug: string;
+    level: number;
     parent_id: {
       id: number;
       name: string;
       slug: string;
-      parent_id: { id: number; name: string; slug: string } | null;
+      level: number;
+      parent_id: { id: number; name: string; slug: string; level: number } | null;
     } | null;
   } | null;
 }
 
+/** 产品变体：参数仍在 product 主表（与语言无关），title 是主表遗留显示名 */
 export interface Variant {
   id: number;
-  title: string;
-  order_no: string;
+  title: string | null;
+  order_no: string | null;
   poles: string | null;
   pitch: string | null;
 }
