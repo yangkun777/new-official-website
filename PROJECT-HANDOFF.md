@@ -111,9 +111,22 @@ language / name / slug / seo_title / seo_description / h1 / short_description / 
 
 ## 6. 怎么启动（本机 · 三个服务）
 
+### 6.1 一键启动（推荐）
+
 ```powershell
-# ① MySQL（端口 3307，便携版）
-D:\degson-pilot\mysql\bin\mysqld.exe --defaults-file="D:\degson-pilot\mysql\my.ini"
+D:\degson-pilot\start-all.ps1            # 生产模式（必要时自动 build）
+D:\degson-pilot\start-all.ps1 -Dev       # 前台 dev 模式（改后台立即反映）
+D:\degson-pilot\start-all.ps1 -SkipBuild # 复用已有 .next，不重新构建
+```
+
+脚本幂等：已在监听的端口会跳过。启动后自动做端口与 `ping` 校验，并打印入口地址。
+
+### 6.2 手工启动（脚本坏了时的备用路径）
+
+```powershell
+# ① MySQL（端口 3307）★ 配置文件在 config/，不在 mysql/，见 §7 坑14
+#    MySQL 不会自动创建 log-error 目录，先确保 D:\degson-pilot\logs 存在
+D:\degson-pilot\mysql\bin\mysqld.exe --defaults-file="D:\degson-pilot\config\mysql\my.ini"
 
 # ② Directus 11（端口 8055）★ PATH 顺序很关键，见 §7 坑1
 $env:PATH = "C:\Users\admin\AppData\Roaming\npm;C:\nvm\v22.23.2;" + $env:PATH
@@ -123,12 +136,13 @@ cd D:\degson-pilot\cms
 # ③ 前台（端口 3000）
 $env:PATH = "C:\Users\admin\AppData\Roaming\npm;C:\nvm\v22.23.2;" + $env:PATH
 cd D:\degson-pilot\web
-pnpm dev                 # 开发（改后台立即反映，dev 下取数 no-store）
-
-# 生产模式（交付/验收用这个）
 .\node_modules\.bin\next.CMD build
 .\node_modules\.bin\next.CMD start -p 3000
 ```
+
+> **`--defaults-file` 必须是 mysqld 的第一个参数**，否则会被忽略。
+> **不要用 `-h127.0.0.1` 这种紧贴写法调 mysql 客户端**（PowerShell 5.1 会把参数拆坏，
+> 报 `Unknown MySQL server host '127'`），一律用 `--host=127.0.0.1 --port=3307`。
 
 **入口**：
 
@@ -167,6 +181,11 @@ cd D:\degson-pilot\data; node verify_m1_web.mjs   # 期望 PASS 34 / FAIL 0
 | **11** | PowerShell `New-Item` **没有 `-LiteralPath` 参数**；而 `[lang]` 这类路径会被 `-Path` 当通配符 | 建目录用 `New-Item -Path`（不存在的路径不做通配展开）；**删除/读取一律 `-LiteralPath`** |
 | **12** | 改了路由结构后跑 `tsc --noEmit` 会报一堆 `Cannot find module '../../../src/app/layout.js'` | 那是 `.next/types/**` 里上一次构建的残留。**先删 `.next` 再检查** |
 | **13** | `.next` 正在被 `next start` 读取时执行 `next build` 会写坏产物 | 改完先停服务再 build，再 start |
+| **14** | **`mysql/my.ini` 从来不存在** —— 便携版 MySQL 当初是用命令行参数起的，而 `mysql/` 整个目录被 gitignore，配置放里面等于不可复现 | 配置文件放**会被跟踪**的 `config/mysql/my.ini`（`datadir` 仍指向 gitignore 的 `mysql/data`）。`--defaults-file` 必须是 mysqld **第一个**参数 |
+| **15** | **本机只有 Windows PowerShell 5.1，没有 PowerShell 7** | ① `pwsh` 命令不存在，脚本里 spawn 子进程要用 `powershell`（`start-all.ps1` 已自适应）；② PS 5.1 **没有 `New-Item -LiteralPath`**（那是 PS 7 的参数）——建目录用 `-Path`，删除/读取用 `-LiteralPath` |
+| **16** | **PS 5.1 按系统 ANSI（GBK）读 `.ps1`**，无 BOM 的 UTF-8 脚本里中文会乱码并撑破字符串解析（报 `Unexpected token`） | 含中文的 `.ps1` 必须存成 **UTF-8 with BOM**。⚠️ **`edit` 工具改完会抹掉 BOM**，每次编辑后要补：`[System.IO.File]::WriteAllText($p, (Get-Content -Raw -Encoding UTF8 $p), (New-Object System.Text.UTF8Encoding($true)))` |
+| **17** | PS 5.1 调原生 exe 时，`-h127.0.0.1` 这类**紧贴参数**会被拆坏（`Unknown MySQL server host '127'`） | 一律用 `--host=127.0.0.1 --port=3307 --user=root --password=...` 的等号长参数形式 |
+| **18** | 本机**另有一个无关的 MySQL 5.7**（`E:\googledownload\guanwangcn\server\mysql57`）常驻占用 **3306** | 我们的实例一律用 **3307**。排查"库怎么连不上"时先用 `Get-CimInstance Win32_Process -Filter "Name='mysqld.exe'"` 看命令行，别误判 |
 
 ---
 

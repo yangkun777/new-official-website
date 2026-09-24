@@ -35,6 +35,10 @@ web/.env.*.local
 mysql/
 mysql8.zip
 *.err
+# 例外：启动配置必须入库，否则「删库可重建」缺一环。
+# 注意 `mysql/` 会在任意层级匹配同名目录，会连 config/mysql/ 一起忽略，必须显式放行。
+!config/mysql/
+!config/mysql/my.ini
 
 # ---------- 数据导出（含真实产品数据）----------
 # 默认全忽略；只放行「小体积、可复现、无真实生产数据」的脚本。
