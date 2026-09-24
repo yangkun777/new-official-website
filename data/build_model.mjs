@@ -63,15 +63,25 @@ async function ensureField(collection, field, type, schema = {}, meta = {}) {
   return false;
 }
 
-/** 建 M2O 关系 */
+/** 建 M2O 关系；可选在父表建 O2M 别名（translations），使翻译行可被遍历 */
 async function ensureRelation(collection, field, related, oneField = null, onDelete = 'SET NULL') {
   const r = await api('POST', '/relations', {
     collection, field, related_collection: related,
     meta: { many_collection: collection, many_field: field, one_collection: related, one_field: oneField, one_deselect_action: 'nullify' },
     schema: { on_delete: onDelete },
   });
-  if (r.status >= 200 && r.status < 300) { console.log(`      ↔ 关系 ${collection}.${field} → ${related}`); ok++; return true; }
-  if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) { skip++; return true; }
+  if (r.status >= 200 && r.status < 300) { console.log(`      ↔ 关系 ${collection}.${field} → ${related}${oneField ? `  (O2M 别名: ${oneField})` : ''}`); ok++; return true; }
+  if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) {
+    // 已存在：确保 one_field 别名已设置（幂等补齐）
+    if (oneField) {
+      const p = await api('PATCH', `/relations/${collection}/${field}`, {
+        meta: { many_collection: collection, many_field: field, one_collection: related, one_field: oneField, one_deselect_action: 'nullify' },
+      });
+      if (p.status >= 200 && p.status < 300) { console.log(`      ↔ 补齐 O2M 别名 ${related}.${oneField}`); ok++; }
+      else { console.log(`      ✗ 补齐 O2M 别名失败 ${p.status}: ${JSON.stringify(p.json).slice(0, 180)}`); fail++; failures.push(`o2m:${related}.${oneField}`); }
+    }
+    skip++; return true;
+  }
   console.log(`      ✗ 关系 ${collection}.${field} 失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 200)}`);
   fail++; failures.push(`rel:${collection}.${field}`);
   return false;
@@ -96,7 +106,8 @@ async function buildTranslation(collection, parentCollection, parentField, note)
   await ensureField(collection, 'description', 'text', { is_nullable: true }, RICH);
   await ensureField(collection, 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
   await ensureField(collection, 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
-  await ensureRelation(collection, parentField, parentCollection, null, 'CASCADE');
+  // ★ O2M 别名 translations：让翻译行在 REST/GraphQL 可遍历，也是 Directus「语言页签」的前提
+  await ensureRelation(collection, parentField, parentCollection, 'translations', 'CASCADE');
 }
 
 console.log('=== DEGSON 底座建模（Directus 11）===');

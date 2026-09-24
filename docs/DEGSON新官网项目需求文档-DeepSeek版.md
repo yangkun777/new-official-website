@@ -183,20 +183,41 @@
 > **R4 建议值**：`utf8mb4_0900_ai_ci`（MySQL 8 的 utf8mb4 默认值）。理由：Directus 界面建表落到该 collation，手写 DDL 显式声明同值即可全库一致，避免 JOIN 时 `Illegal mix of collations`。
 > **R5 现状**：已完成拆分（`degson_legacy` = hr_article 16,744 + hr_category 183）。
 
-### 5.5 取数模式（★ 本版新增，待验证阻塞项）
+### 5.5 取数模式（★ 本版修订：已实测完毕，结论为 REST）
 
-试点 README 记录：本 Directus 对**深层 filter（`filter[rel][field]`）报 403**、**M2O 字段展开返回空**，故改用"两次 root 查询 + 应用层 join"。
+**M0.2 README 记录**："本 Directus 对深层 filter（`filter[rel][field]`）报 403、M2O 字段展开返回空"，故改用"两次 root 查询 + 应用层 join"。
 
-**该现象必须查清，因为它决定全部页面的取数写法：**
+**M0.3 实测结论：该记录不成立。** 逐级验证结果（Directus 11.17.4）：
 
-| 可能性 | 判断方法 | 若成立的影响 |
-|---|---|---|
-| 权限未配到关联集合（**最可能**，403 是权限语义） | 用 admin token 复现同一查询：若 admin 成功而 web-read 失败 → 权限问题 | 修正权限即可，取数模式无需绕路 |
-| Directus 版本缺陷 | 查官方 issue / 升级验证 | 需评估是否影响选型 |
-| 查询写法问题 | 用 GraphQL 对照 REST | 改用 GraphQL |
+| 方式 | 结果 |
+|---|---|
+| REST 单表字段 `fields=id,title` | ✅ 200 |
+| REST M2O 裸字段 `fields=series_id` | ✅ 200 |
+| REST M2O 点号展开 `fields=series_id.id` | ✅ 200 |
+| REST M2O 通配展开 `fields=series_id.*` | ✅ 200（返回完整嵌套对象） |
+| REST 关系过滤 `filter[series_id][matecode][_eq]=…` | ✅ 200 |
+| REST 三级关联过滤 `filter[series_id][category_id][level][_eq]=3` | ✅ 200 |
+| REST 遍历翻译行 `fields=translations.language,translations.name` | ✅ 200 |
+| GraphQL 嵌套展开 / 关系过滤 / 遍历翻译行 | ✅ 200 |
 
-**硬性要求**：M1 开工前给出结论，并**固化一种取数模式**（REST / GraphQL / 自定义 endpoint）。
-**风险提示**："拉 200 行再在应用层 join"在 4 万 SKU 规模会失效，不得作为长期方案。
+**403 的真实来源**：早期测试是用 PowerShell `Invoke-WebRequest` 直接拼 URL，其中的 `[` `]` 被 PowerShell 当作**通配符**处理，导致请求异常——**是测试工具自身的问题，不是 Directus 的限制**。改用 Node `fetch` 逐级重测后全部 200。
+
+**同时发现并修复了一个真实的模型缺陷**：首次建模只建了 M2O（`product_translations.product_id → product`），**父表上没有反向 O2M 别名**，导致
+- GraphQL 报 `Cannot query field "product_translations" on type "product"`
+- Directus「语言页签」也无法工作
+
+**已补齐**：四个父集合各增一个 `translations` 别名（`special: o2m`），并将 `directus_relations.one_field` 指向它。补齐后 REST 与 GraphQL 都能遍历翻译行。
+
+> ⚠️ **踩坑记录**：Directus 11.17.4 的 `PATCH /relations/<collection>/<field>` 会崩溃
+> （`RelationsService.alterType` 读 undefined 的 `schema.collections[...]`，服务直接挂掉，实测两次）。
+> **别名字段用 `POST /fields` 建；`one_field` 改为直接写 `directus_relations` 表（停服务后改，再重启）。**
+
+**结论（取数模式定案）**：
+1. **前台取数走 REST**，包括关系过滤与嵌套展开；**不需要"两次查询 + 应用层 join"** —— 该绕法在 4 万 SKU 规模会失效，现在可以彻底放弃
+2. GraphQL 同样可用，作为备选；需要遍历翻译行时依赖上述 O2M 别名
+3. 前台仍**不直连数据库**（§5.2 硬性约束不变）
+
+**验证脚本**：`data/probe_api.mjs`、`data/verify_alias.mjs`（可复跑）
 
 ---
 

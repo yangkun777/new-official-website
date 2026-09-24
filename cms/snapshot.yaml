@@ -565,6 +565,34 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: category
+    field: translations
+    type: alias
+    meta:
+      collection: category
+      conditions: null
+      display: related-values
+      display_options:
+        template: '{{language}} — {{name}}'
+      field: translations
+      group: null
+      hidden: false
+      interface: list-o2m
+      note: 翻译行（每语言一行）
+      options:
+        enableCreate: true
+        enableSelect: true
+        template: '{{name}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special:
+        - o2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
   - collection: category_translations
     field: id
     type: integer
@@ -683,8 +711,8 @@ fields:
       is_generated: false
       generation_expression: null
       has_auto_increment: false
-      foreign_key_table: category
-      foreign_key_column: id
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: category_translations
     field: name
     type: string
@@ -1569,6 +1597,34 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: news
+    field: translations
+    type: alias
+    meta:
+      collection: news
+      conditions: null
+      display: related-values
+      display_options:
+        template: '{{language}} — {{name}}'
+      field: translations
+      group: null
+      hidden: false
+      interface: list-o2m
+      note: 翻译行（每语言一行）
+      options:
+        enableCreate: true
+        enableSelect: true
+        template: '{{name}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 8
+      special:
+        - o2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
   - collection: news_translations
     field: id
     type: integer
@@ -2453,6 +2509,34 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: product
+    field: translations
+    type: alias
+    meta:
+      collection: product
+      conditions: null
+      display: related-values
+      display_options:
+        template: '{{language}} — {{name}}'
+      field: translations
+      group: null
+      hidden: false
+      interface: list-o2m
+      note: 翻译行（每语言一行）
+      options:
+        enableCreate: true
+        enableSelect: true
+        template: '{{name}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special:
+        - o2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
   - collection: product_translations
     field: id
     type: integer
@@ -2571,8 +2655,8 @@ fields:
       is_generated: false
       generation_expression: null
       has_auto_increment: false
-      foreign_key_table: product
-      foreign_key_column: id
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: product_translations
     field: name
     type: string
@@ -3257,6 +3341,34 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: series
+    field: translations
+    type: alias
+    meta:
+      collection: series
+      conditions: null
+      display: related-values
+      display_options:
+        template: '{{language}} — {{name}}'
+      field: translations
+      group: null
+      hidden: false
+      interface: list-o2m
+      note: 翻译行（每语言一行）
+      options:
+        enableCreate: true
+        enableSelect: true
+        template: '{{name}}'
+      readonly: false
+      required: false
+      searchable: true
+      sort: 9
+      special:
+        - o2m
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
   - collection: series_translations
     field: id
     type: integer
@@ -4343,16 +4455,8 @@ relations:
       one_collection: category
       one_collection_field: null
       one_deselect_action: nullify
-      one_field: null
+      one_field: translations
       sort_field: null
-    schema:
-      table: category_translations
-      column: category_id
-      foreign_key_table: category
-      foreign_key_column: id
-      constraint_name: category_translations_category_id_foreign
-      on_update: NO ACTION
-      on_delete: CASCADE
   - collection: news_translations
     field: news_id
     related_collection: news
@@ -4364,7 +4468,7 @@ relations:
       one_collection: news
       one_collection_field: null
       one_deselect_action: nullify
-      one_field: null
+      one_field: translations
       sort_field: null
     schema:
       table: news_translations
@@ -4406,16 +4510,8 @@ relations:
       one_collection: product
       one_collection_field: null
       one_deselect_action: nullify
-      one_field: null
+      one_field: translations
       sort_field: null
-    schema:
-      table: product_translations
-      column: product_id
-      foreign_key_table: product
-      foreign_key_column: id
-      constraint_name: product_translations_product_id_foreign
-      on_update: NO ACTION
-      on_delete: CASCADE
   - collection: series
     field: category_id
     related_collection: category
@@ -4448,7 +4544,7 @@ relations:
       one_collection: series
       one_collection_field: null
       one_deselect_action: nullify
-      one_field: null
+      one_field: translations
       sort_field: null
     schema:
       table: series_translations
