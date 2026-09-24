@@ -289,6 +289,7 @@ product.title / order_no / poles / pitch → 留在主表，变体表不用改
 | 分类/系列页 JSON-LD 仍是 `CollectionPage` | 未加 `ItemList`，产品页 `Product` 未加 `offers`（无价格，需按 PRD §8.1.1 决定） |
 | 无 `data/99_verify.sql` 更新 | 字段已变，该脚本仍按旧模型写，**跑之前要先改** |
 | 无 301 重定向表 | 旧站 `details_552_*` → 新 URL 的映射未建 |
+| **响应式未达标（PRD §7.4 要求 3/4，验收级）** | `SiteHeader` 无移动端导航形态；`VariantTable` 仅有 `overflow-x-auto` 横向滚动，未做移动端卡片形态。M1 静态盘点：**48 处断点类 / 11/18 文件含断点**，卡片栅格与容器留白已适配，`viewport` meta 由 Next 默认注入；但**从未按视口实测**（要求 2 未验证）。PRD §7.4 要求六个视口宽度 × 五类页型 + iOS/Android 真机各一轮 |
 
 ---
 
