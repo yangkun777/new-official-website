@@ -1,7 +1,19 @@
+# pnpm 12 的构建设置
+# （pnpm 12 起，package.json 里的 "pnpm.onlyBuiltDependencies" 字段已被忽略，配置迁移到本文件）
+#
+# 放行原则：只开启本项目运行时真正需要的原生模块
+#   argon2       ✅ Directus 密码哈希（必需）
+#   esbuild      ✅ 构建/打包工具链（Directus 依赖）
+#   isolated-vm  ✅ Directus Flows 脚本沙箱（必需；Node 22 有预编译二进制，无需 C++ 工具链）
+#   sharp        ✅ Directus 图片处理（必需）
+#   oracledb     ❌ 不用 Oracle
+#   sqlite3      ❌ 不用 SQLite（本项目用 MySQL 8）
+#   braintrust   ❌ AI 评测库，Directus 运行时不需要
 allowBuilds:
-  argon2: set this to true or false
-  braintrust: set this to true or false
-  esbuild: set this to true or false
-  isolated-vm: set this to true or false
-  oracledb: set this to true or false
-  sqlite3: set this to true or false
+  argon2: true
+  esbuild: true
+  isolated-vm: true
+  sharp: true
+  oracledb: false
+  sqlite3: false
+  braintrust: false

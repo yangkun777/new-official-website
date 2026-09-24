@@ -1,14 +1,15 @@
 {
   "name": "cms",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "DEGSON 新官网后台（Directus 11，版本锁定）",
+  "type": "module",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "directus start",
+    "bootstrap": "directus bootstrap",
+    "snapshot": "directus schema snapshot --yes ./snapshot.yaml",
+    "apply": "directus schema apply --yes ./snapshot.yaml"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
@@ -17,6 +18,10 @@
     }
   },
   "packageManager": "pnpm@12.5.1",
-  "type": "module",
-  "dependencies": { "directus": "^12.3.1" }, "pnpm": { "onlyBuiltDependencies": ["isolated-vm"] }
+  "engines": {
+    "node": ">=20 <23"
+  },
+  "dependencies": {
+    "directus": "11.17.4"
+  }
 }
