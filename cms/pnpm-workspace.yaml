@@ -1,0 +1,7 @@
+allowBuilds:
+  argon2: set this to true or false
+  braintrust: set this to true or false
+  esbuild: set this to true or false
+  isolated-vm: set this to true or false
+  oracledb: set this to true or false
+  sqlite3: set this to true or false

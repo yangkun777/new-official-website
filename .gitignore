@@ -1,0 +1,66 @@
+# ============================================================
+# DEGSON 全栈试点 .gitignore
+# 原则：凭据 / 大数据 / 生成物 一律不入库
+# ============================================================
+
+# ---------- 依赖 ----------
+node_modules/
+.pnpm-store/
+
+# ---------- Next.js 生成物 ----------
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# ---------- 环境与凭据（★ 关键）----------
+# 含数据库密码、Directus SECRET/KEY、管理员密码
+.env
+.env.*
+!.env.example
+cms/.env
+web/.env
+web/.env.local
+web/.env.*.local
+
+# Directus 访问令牌与 policy id（原始 .gitignore 漏掉了这三个）
+.admin_token
+.web_token
+.policy_id
+*.token
+*_token
+
+# ---------- 便携版 MySQL（二进制，约 1GB，不入库）----------
+mysql/
+mysql8.zip
+*.err
+
+# ---------- 数据导出（含真实产品数据）----------
+# 默认全忽略；只放行「小体积、可复现、无真实生产数据」的脚本。
+# 注意：.gitignore 不支持行内注释，注释必须独占一行。
+data/*.sql
+!data/02_schema_clean.sql
+!data/03_seed.sql
+!data/99_verify.sql
+# 说明：data/01_legacy_subset.sql（11MB 旧库生产数据）不另行放行，保持忽略
+
+# ---------- Directus 上传的文件（用户内容，走 OSS，不入库）----------
+cms/uploads/
+
+# ---------- 日志 ----------
+*.log
+dev-*.log
+logs/
+
+# ---------- 快照：Directus schema 快照必须入库 ----------
+# （不要忽略 snapshot，它是后台可重建的唯一依据）
+!cms/snapshot.yaml
+!cms/snapshot.json
+
+# ---------- misc ----------
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
