@@ -6,6 +6,7 @@ import { toLang, type Lang } from "@/lib/lang";
 import { hreflangMap, siteUrl } from "@/lib/site";
 import LangSwitcher from "@/components/LangSwitcher";
 import ProductImage from "@/components/ProductImage";
+import { sanitizeRichText } from "@/lib/contentSafety";
 
 export const revalidate = 60;
 
@@ -83,7 +84,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
       {n.body ? (
         <div
           className="mt-6 leading-relaxed text-slate-700 [&_p]:mb-4"
-          dangerouslySetInnerHTML={{ __html: n.body }}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichText(n.body) }}
         />
       ) : null}
     </article>

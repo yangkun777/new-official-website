@@ -1,4 +1,5 @@
 import { apiGet, apiGetList } from "./directus";
+import { resolveMediaUrl } from "./media";
 import {
   DEFAULT_LANG,
   LANGS,
@@ -394,13 +395,6 @@ export async function getVariants(seriesId: number): Promise<Variant[]> {
 // 新闻
 // ---------------------------------------------------------------------------
 
-const DIRECTUS_BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
-
-// cover_image 是 directus_files 的 file id（UUID），渲染用 Directus /assets/{id}
-function fileUrl(fileId: string | null): string | null {
-  return fileId ? `${DIRECTUS_BASE}/assets/${fileId}` : null;
-}
-
 interface RawNews {
   id: number;
   publish_date: string | null;
@@ -431,7 +425,7 @@ export async function getNewsList(lang: Lang): Promise<NewsListItem[]> {
       newsId: n.id,
       slug: t.row.slug ?? "",
       publish_date: n.publish_date,
-      cover_image: fileUrl(n.cover_image),
+      cover_image: resolveMediaUrl(n.cover_image),
       title: t.row.name ?? "",
       summary: t.row.short_description,
       lang: t.row.language as Lang,
@@ -478,7 +472,7 @@ export async function getNewsBySlug(
       newsId: n.id,
       slug: own.slug ?? "",
       publish_date: n.publish_date,
-      cover_image: fileUrl(n.cover_image),
+      cover_image: resolveMediaUrl(n.cover_image),
       title: own.name ?? "",
       summary: own.short_description,
       body: own.description,
