@@ -43,15 +43,10 @@ export function normalizeIdentity(value) {
   return normalizeText(value);
 }
 
-function normalizeNumber(value, field, errors, legacyId) {
-  const normalized = normalizeText(value);
-  if (normalized === null) return null;
-  const number = Number(normalized);
-  if (!Number.isFinite(number)) {
-    errors.push(`invalid ${field} for legacy row ${legacyId}: ${normalized}`);
-    return null;
-  }
-  return number;
+function normalizeMeasure(value) {
+  // Legacy text1/text2 contain domain values such as `24P`, `1A`, `2C/O`
+  // and `220VAC`; the new schema intentionally preserves these as strings.
+  return normalizeText(value);
 }
 
 function mapCategory(row, language) {
@@ -86,8 +81,8 @@ function mapProduct(row, language, errors) {
     series_matecode: seriesMatecode,
     order_no: orderNo,
     title: normalizeText(row.title),
-    pitch: normalizeNumber(row.text1, "product.pitch", errors, row.id),
-    poles: normalizeNumber(row.text2, "product.poles", errors, row.id),
+    pitch: normalizeMeasure(row.text1),
+    poles: normalizeMeasure(row.text2),
     image: normalizeText(row.thumb),
     description: normalizeText(row.description),
     language,
@@ -133,5 +128,8 @@ export function validateMigrationBatch(batch) {
     if (!row.title) warnings.push(`blank product title for legacy row ${row.legacy_id}`);
   }
 
-  return { errors, warnings };
+  return {
+    errors: [...new Set(errors)],
+    warnings: [...new Set(warnings)],
+  };
 }

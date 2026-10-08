@@ -31,8 +31,8 @@ assert.deepEqual(mapped.series[0], {
   language: "en",
 });
 assert.equal(mapped.products[0].order_no, "DG271V-2-102");
-assert.equal(mapped.products[0].pitch, 3.5);
-assert.equal(mapped.products[0].poles, 2);
+assert.equal(mapped.products[0].pitch, "3.5");
+assert.equal(mapped.products[0].poles, "2");
 
 const report = validateMigrationBatch(mapped);
 assert.deepEqual(report, { errors: [], warnings: [] });

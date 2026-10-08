@@ -30,8 +30,8 @@
 | `hr_article.text` | `product.order_no` | 去除首尾空格，禁止空值和重复 |
 | `hr_article.matecode` | `product.series_matecode` | 必须能关联到已导入系列 |
 | `hr_article.title` | `product.title` | 去除首尾空格，空值告警 |
-| `hr_article.text1` | `product.pitch` | 转换为数字，非法值报错 |
-| `hr_article.text2` | `product.poles` | 转换为数字，非法值报错 |
+| `hr_article.text1` | `product.pitch` | 保留业务字符串，如 `3.5`、`4C`、`1NO` |
+| `hr_article.text2` | `product.poles` | 保留业务字符串，如 `24P`、`1A`、`2C/O` |
 | `hr_article.thumb` | `product.image` | 空字符串转 null |
 | `hr_article.description` | `product.description` | 去除首尾空格，后续进入富文本净化 |
 
@@ -45,7 +45,7 @@
 - 重复 `product.order_no`。
 - 重复 `series.matecode`。
 - 产品引用不存在的系列码。
-- 数字字段无法转换。
+- 必须做数值计算的字段无法从业务字符串中解析时，进入后续参数裁决；本契约不把 `pitch`/`poles` 强制转成数字。
 
 告警：
 
