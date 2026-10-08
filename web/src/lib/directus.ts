@@ -1,10 +1,12 @@
 // Directus REST 取数封装：前台只通过此文件访问数据，不持有任何数据库凭据。
 // 缓存策略：dev 下 no-store（闭环演示——改后台立即反映）；prod 用 ISR 60s + tag。
 
+import type { ContentTag } from "./cacheTags";
+
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const TOKEN = process.env.DIRECTUS_TOKEN ?? "";
 
-function init(tag: string): RequestInit {
+function init(tag: ContentTag): RequestInit {
   const headers = { Authorization: `Bearer ${TOKEN}` };
   if (process.env.NODE_ENV === "development") {
     return { headers, cache: "no-store" };

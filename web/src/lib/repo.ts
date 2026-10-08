@@ -1,5 +1,6 @@
 import { apiGet, apiGetList } from "./directus";
 import { resolveMediaUrl } from "./media";
+import { CONTENT_TAGS } from "./cacheTags";
 import {
   DEFAULT_LANG,
   LANGS,
@@ -137,7 +138,7 @@ function catChainFilters(lang: Lang): Record<string, string> {
 // ---------------------------------------------------------------------------
 
 export function getSiteSettings(): Promise<SiteSettings | null> {
-  return apiGet<SiteSettings>("/items/site_settings/1", {}, "settings").catch(
+  return apiGet<SiteSettings>("/items/site_settings/1", {}, CONTENT_TAGS.settings).catch(
     () => null
   );
 }
@@ -175,7 +176,7 @@ export async function getCategoriesByLevel(
       fields: `id,level,sort,status,image,${tf("translations")}`,
       ...dfList("translations", lang),
     },
-    "category"
+    CONTENT_TAGS.category
   );
   return items
     .map((n) => toSubCard(n, lang))
@@ -203,7 +204,7 @@ export async function getCategoryBySlug(
       fields: CAT_CHAIN_FIELDS,
       ...catChainFilters(lang),
     },
-    "category"
+    CONTENT_TAGS.category
   );
   const node = items[0];
   if (!node) return null;
@@ -249,7 +250,7 @@ export async function getSubCategories(
       fields: `id,level,sort,image,${tf("translations")}`,
       ...dfList("translations", lang),
     },
-    "category"
+    CONTENT_TAGS.category
   );
   return items
     .map((n) => toSubCard(n, lang))
@@ -291,7 +292,7 @@ export async function getSeriesByCategory(
       fields: `id,matecode,image,${tf("translations")}`,
       ...dfList("translations", lang),
     },
-    "series"
+    CONTENT_TAGS.series
   );
   return {
     items: items
@@ -321,7 +322,7 @@ export async function getSeriesByMatecode(
       fields: SERIES_CHAIN_FIELDS,
       ...catChainFilters(lang),
     },
-    "series"
+    CONTENT_TAGS.series
   );
   const node = items[0];
   if (!node) return null;
@@ -364,7 +365,7 @@ export async function getRelatedSeries(
       fields: `id,matecode,image,${tf("translations")}`,
       ...dfList("translations", lang),
     },
-    "series"
+    CONTENT_TAGS.series
   );
   return items
     .map((n) => toSeriesItem(n, lang))
@@ -386,7 +387,7 @@ export async function getVariants(seriesId: number): Promise<Variant[]> {
         fields: "id,title,order_no,poles,pitch",
         limit: "500",
       },
-      "product"
+      CONTENT_TAGS.product
     )
   ).items;
 }
@@ -414,7 +415,7 @@ export async function getNewsList(lang: Lang): Promise<NewsListItem[]> {
       fields: `id,publish_date,cover_image,status,${tf("translations")}`,
       ...dfList("translations", lang),
     },
-    "news"
+    CONTENT_TAGS.news
   );
   const out: NewsListItem[] = [];
   for (const n of items) {
@@ -455,7 +456,7 @@ export async function getNewsBySlug(
       limit: "1",
       fields: `id,publish_date,cover_image,status,${tf("translations")}`,
     },
-    "news"
+    CONTENT_TAGS.news
   );
   const n = items[0];
   if (!n) return null;
