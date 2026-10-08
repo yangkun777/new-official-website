@@ -60,3 +60,18 @@
 4. 重新执行 dry-run，目标是分类、系列、SKU 的 `READY` 数量可解释，且 `REVIEW/REJECT` 均有负责人和裁决记录。
 
 原始 JSON 报告位于本地忽略目录：`data/migration/reports/legacy-dry-run.json`，不会提交到 Git。
+
+## 旧 URL 预览补充
+
+已使用同一份旧库只读快照运行 `data/migration/buildUrlRedirectPreview.mjs`，结果写入本地忽略目录 `data/migration/reports/`，未生成可上线的 301 配置：
+
+| 状态 | 数量 |
+|---|---:|
+| `OK` | 13,289 |
+| `REVIEW_TARGET_COLLISION` | 7 |
+| `REVIEW_DUPLICATE_ORDER_NO` | 6 |
+| 合计 | 13,302 |
+
+本次未发现重复旧 URL。7 条目标冲突来自不同旧分类生成相同 slug，例如 `Accessories`、`PV-DC Connector`、`450A Conductive Pillar`；6 条重复订货号涉及 `21010000138`、`21010000001`、`21010000440`。这些记录都不能在没有业务裁决的情况下自动生成确定性 301。
+
+预览脚本现在还会把重复旧 URL标记为 `REVIEW_SOURCE_URL_COLLISION`，把重复新目标标记为 `REVIEW_TARGET_COLLISION`，并保留原有的重复系列码/订货号状态。
