@@ -49,6 +49,7 @@ data/*.sql
 !data/03_seed.sql
 !data/99_verify.sql
 # 说明：data/01_legacy_subset.sql（11MB 旧库生产数据）不另行放行，保持忽略
+data/migration/reports/
 
 # ---------- Directus 上传的文件（用户内容，走 OSS，不入库）----------
 cms/uploads/
