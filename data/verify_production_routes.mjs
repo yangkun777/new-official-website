@@ -9,7 +9,10 @@ async function get(path) {
 
 const root = await get("/");
 assert.equal(root.status, 200, `production root should render, got ${root.status}`);
-assert.match(await root.text(), /<html[^>]+lang="en"/i);
+const rootText = await root.text();
+assert.match(rootText, /<html[^>]+lang="en"/i);
+assert.match(rootText, /name="robots"[^>]+content="index, follow"/i);
+assert.equal(root.headers.get("x-robots-tag"), null);
 
 const news = await get("/news");
 assert.equal(news.status, 200, `production /news should render, got ${news.status}`);
