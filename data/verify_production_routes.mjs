@@ -26,4 +26,12 @@ const cnRoot = await fetch(cnBase, { redirect: "manual" });
 assert.equal(cnRoot.status, 200, `production CN root should render, got ${cnRoot.status}`);
 assert.match(await cnRoot.text(), /<html[^>]+lang="zh-Hans"/i);
 
+const zhOnMain = await get("/zh");
+assert.equal(zhOnMain.status, 307, `main-domain /zh should redirect, got ${zhOnMain.status}`);
+assert.equal(new URL(zhOnMain.headers.get("location"), base).href, process.env.CN_CANONICAL ?? `${base}/`);
+
+const enOnCn = await fetch(`${cnBase}/en`, { redirect: "manual" });
+assert.equal(enOnCn.status, 307, `CN-domain /en should redirect, got ${enOnCn.status}`);
+assert.equal(new URL(enOnCn.headers.get("location"), cnBase).href, process.env.CN_CANONICAL ?? `${cnBase}/`);
+
 console.log("PASS production route contract");
