@@ -5,8 +5,20 @@ import { siteUrl } from "@/lib/site";
 
 export const revalidate = 300;
 
-function addUnique(entries: MetadataRoute.Sitemap, url: string): void {
-  if (!entries.some((entry) => entry.url === url)) entries.push({ url });
+function addUnique(
+  entries: MetadataRoute.Sitemap,
+  url: string,
+  lastModified?: string | null
+): void {
+  const existing = entries.find((entry) => entry.url === url);
+  if (existing) {
+    if (!existing.lastModified && lastModified) existing.lastModified = lastModified;
+    return;
+  }
+  entries.push({
+    url,
+    ...(lastModified ? { lastModified } : {}),
+  });
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -25,7 +37,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         newsPages.push(result.items);
       }
       for (const item of newsPages.flat()) {
-        if (item.slug) addUnique(entries, siteUrl(item.lang, `/news/${item.slug}`));
+        if (item.slug) {
+          addUnique(entries, siteUrl(item.lang, `/news/${item.slug}`), item.updated_at);
+        }
       }
     } catch {
       // The base sitemap remains available while CMS data is unavailable.
@@ -43,7 +57,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
         for (const category of categoryPages.flat()) {
           if (category.slug) {
-            addUnique(entries, siteUrl(category.lang as Lang, `/product/category/${category.slug}`));
+            addUnique(
+              entries,
+              siteUrl(category.lang as Lang, `/product/category/${category.slug}`),
+              category.updated_at
+            );
           }
         }
       } catch {
@@ -56,12 +74,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const first = await getSeriesForSitemap(lang, 1, limit);
       const pages = Math.max(1, Math.ceil(first.total / limit));
       for (const series of first.items) {
-        if (series.matecode) addUnique(entries, siteUrl(series.lang, `/product/series/${series.matecode}`));
+        if (series.matecode) {
+          addUnique(
+            entries,
+            siteUrl(series.lang, `/product/series/${series.matecode}`),
+            series.updated_at
+          );
+        }
       }
       for (let page = 2; page <= pages; page++) {
         const result = await getSeriesForSitemap(lang, page, limit);
         for (const series of result.items) {
-          if (series.matecode) addUnique(entries, siteUrl(series.lang, `/product/series/${series.matecode}`));
+          if (series.matecode) {
+            addUnique(
+              entries,
+              siteUrl(series.lang, `/product/series/${series.matecode}`),
+              series.updated_at
+            );
+          }
         }
       }
     } catch {

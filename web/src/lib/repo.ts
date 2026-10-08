@@ -64,6 +64,7 @@ interface RawCatNode {
   status?: string;
   image: string | null;
   translations: TranslationRow[];
+  updated_at?: string | null;
   parent_id?: RawCatNode | null;
 }
 
@@ -72,6 +73,7 @@ interface RawSeriesNode {
   matecode: string;
   image: string | null;
   translations: TranslationRow[];
+  updated_at?: string | null;
   category_id?: RawCatNode | null;
 }
 
@@ -158,6 +160,7 @@ function toSubCard(node: RawCatNode, lang: Lang): SubCategoryCard | null {
     description: t.row.short_description ?? t.row.description ?? null,
     lang: t.row.language as Lang,
     fallback: t.isFallback,
+    updated_at: node.updated_at ?? null,
   };
 }
 
@@ -173,7 +176,7 @@ export async function getCategoriesByLevel(
       "filter[status][_eq]": "published",
       sort: "sort",
       limit: "100",
-      fields: `id,level,sort,status,image,${tf("translations")}`,
+      fields: `id,level,sort,status,image,updated_at,${tf("translations")}`,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.category
@@ -198,7 +201,7 @@ export async function getCategoriesForSitemap(
       sort: "sort",
       limit: String(limit),
       page: String(page),
-      fields: `id,level,sort,status,image,${tf("translations")}`,
+      fields: `id,level,sort,status,image,updated_at,${tf("translations")}`,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.category
@@ -300,6 +303,7 @@ function toSeriesItem(node: RawSeriesNode, lang: Lang): SeriesListItem | null {
     description: t.row.short_description ?? t.row.description ?? null,
     lang: t.row.language as Lang,
     fallback: t.isFallback,
+    updated_at: node.updated_at ?? null,
   };
 }
 
@@ -343,7 +347,7 @@ export async function getSeriesForSitemap(
       sort: "id",
       limit: String(limit),
       page: String(page),
-      fields: `id,matecode,image,${tf("translations")}`,
+      fields: `id,matecode,image,updated_at,${tf("translations")}`,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.series
@@ -466,6 +470,7 @@ interface RawNews {
   cover_image: string | null;
   status: string;
   translations: TranslationRow[];
+  updated_at: string | null;
 }
 
 /** 新闻列表：一次查回主表 + 「请求语言 + en」翻译 */
@@ -476,7 +481,7 @@ export async function getNewsList(lang: Lang): Promise<NewsListItem[]> {
       "filter[status][_eq]": "published",
       sort: "-publish_date",
       limit: "200",
-      fields: `id,publish_date,cover_image,status,${tf("translations")}`,
+      fields: `id,publish_date,cover_image,status,updated_at,${tf("translations")}`,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.news
@@ -499,6 +504,7 @@ function toNewsListItems(items: RawNews[], lang: Lang): NewsListItem[] {
       summary: t.row.short_description,
       lang: t.row.language as Lang,
       fallback: t.isFallback,
+      updated_at: n.updated_at,
     });
   }
   return out.sort((a, b) =>
@@ -519,7 +525,7 @@ export async function getNewsForSitemap(
       sort: "-publish_date",
       limit: String(limit),
       page: String(page),
-      fields: `id,publish_date,cover_image,status,${tf("translations")}`,
+      fields: `id,publish_date,cover_image,status,updated_at,${tf("translations")}`,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.news

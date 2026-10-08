@@ -46,6 +46,8 @@ export interface SubCategoryCard {
   description: string | null;
   lang: Lang;
   fallback: boolean;
+  /** CMS 主表真实更新时间；为空时 sitemap 不输出 lastmod。 */
+  updated_at?: string | null;
 }
 
 export interface SeriesListItem {
@@ -56,6 +58,8 @@ export interface SeriesListItem {
   description: string | null;
   lang: Lang;
   fallback: boolean;
+  /** CMS 主表真实更新时间；为空时 sitemap 不输出 lastmod。 */
+  updated_at?: string | null;
 }
 
 export interface Series {
