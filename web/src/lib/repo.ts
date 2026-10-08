@@ -302,6 +302,32 @@ export async function getSeriesByCategory(
   };
 }
 
+/** Sitemap 用分页系列读取：只返回已发布且有可服务翻译的系列。 */
+export async function getSeriesForSitemap(
+  lang: Lang,
+  page: number,
+  limit = 500
+): Promise<{ items: SeriesListItem[]; total: number }> {
+  const { items, total } = await apiGetList<RawSeriesNode>(
+    "/items/series",
+    {
+      "filter[status][_eq]": "published",
+      sort: "id",
+      limit: String(limit),
+      page: String(page),
+      fields: `id,matecode,image,${tf("translations")}`,
+      ...dfList("translations", lang),
+    },
+    CONTENT_TAGS.series
+  );
+  return {
+    items: items
+      .map((n) => toSeriesItem(n, lang))
+      .filter((s): s is SeriesListItem => s !== null),
+    total,
+  };
+}
+
 export interface LocalizedSeries {
   series: Series;
   /** matecode 与语言无关，但翻译可能缺失 → 实际可服务的语言 */

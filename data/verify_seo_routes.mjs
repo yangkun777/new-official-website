@@ -9,6 +9,7 @@ const files = {
   news: fs.readFileSync("web/src/app/[lang]/news/[slug]/page.tsx", "utf8"),
   series: fs.readFileSync("web/src/app/[lang]/product/series/[matecode]/page.tsx", "utf8"),
   category: fs.readFileSync("web/src/app/[lang]/product/category/[slug]/page.tsx", "utf8"),
+  repo: fs.readFileSync("web/src/lib/repo.ts", "utf8"),
 };
 
 assert.match(files.robots, /MetadataRoute\.Robots/);
@@ -17,6 +18,7 @@ assert.match(files.robots, /Disallow|disallow/);
 assert.match(files.sitemap, /MetadataRoute\.Sitemap/);
 assert.match(files.sitemap, /getNewsList/);
 assert.match(files.sitemap, /getCategoriesByLevel/);
+assert.match(files.sitemap, /getSeriesForSitemap/);
 assert.match(files.sitemap, /siteUrl/);
 assert.match(files.llms, /text\/plain/);
 assert.match(files.llms, /siteUrl/);
@@ -27,5 +29,6 @@ assert.match(files.news, /NewsArticle/);
 assert.match(files.news, /serializeJsonLd/);
 assert.doesNotMatch(files.series, /JSON\.stringify\(jsonLd\)/);
 assert.doesNotMatch(files.category, /JSON\.stringify\(jsonLd\)/);
+assert.match(files.repo, /export async function getSeriesForSitemap/);
 
 console.log("PASS SEO routes contract");

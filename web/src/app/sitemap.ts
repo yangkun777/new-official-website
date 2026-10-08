@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getCategoriesByLevel, getNewsList } from "@/lib/repo";
+import { getCategoriesByLevel, getNewsList, getSeriesForSitemap } from "@/lib/repo";
 import { LANGS, type Lang } from "@/lib/lang";
 import { siteUrl } from "@/lib/site";
 
@@ -35,6 +35,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       } catch {
         // Keep already collected URLs; a temporary CMS failure must not 500 the route.
       }
+    }
+
+    try {
+      const limit = 500;
+      const first = await getSeriesForSitemap(lang, 1, limit);
+      const pages = Math.max(1, Math.ceil(first.total / limit));
+      for (const series of first.items) {
+        if (series.matecode) addUnique(entries, siteUrl(series.lang, `/product/series/${series.matecode}`));
+      }
+      for (let page = 2; page <= pages; page++) {
+        const result = await getSeriesForSitemap(lang, page, limit);
+        for (const series of result.items) {
+          if (series.matecode) addUnique(entries, siteUrl(series.lang, `/product/series/${series.matecode}`));
+        }
+      }
+    } catch {
+      // Keep the already collected URL classes if the CMS is temporarily unavailable.
     }
   }
   return entries;
