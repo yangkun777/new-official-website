@@ -431,19 +431,29 @@ export async function getRelatedSeries(
 // ---------------------------------------------------------------------------
 
 export async function getVariants(seriesId: number): Promise<Variant[]> {
-  return (
-    await apiGetList<Variant>(
+  const limit = 500;
+  const getPage = (page: number) =>
+    apiGetList<Variant>(
       "/items/product",
       {
         "filter[series_id][_eq]": String(seriesId),
         "filter[status][_eq]": "published",
         sort: "id",
+        limit: String(limit),
+        page: String(page),
         fields: "id,title,order_no,poles,pitch",
-        limit: "500",
       },
       CONTENT_TAGS.product
-    )
-  ).items;
+    );
+
+  const first = await getPage(1);
+  const pages = Math.max(1, Math.ceil(first.total / limit));
+  const all = [...first.items];
+  for (let page = 2; page <= pages; page++) {
+    const result = await getPage(page);
+    all.push(...result.items);
+  }
+  return all;
 }
 
 // ---------------------------------------------------------------------------
