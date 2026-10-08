@@ -63,6 +63,7 @@ logs/
 !cms/snapshot.json
 
 # ---------- misc ----------
+.worktrees/
 .DS_Store
 Thumbs.db
 *.swp
