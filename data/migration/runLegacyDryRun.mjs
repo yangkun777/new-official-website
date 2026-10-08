@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractLegacyBatch } from "./extractLegacyBatch.mjs";
-import { partitionLegacyBatch } from "./partitionLegacyBatch.mjs";
+import { partitionLegacyBatch, summarizeCategoryGaps } from "./partitionLegacyBatch.mjs";
 
 function option(name, fallback) {
   const value = process.argv.find((arg) => arg.startsWith(`--${name}=`));
@@ -19,6 +19,7 @@ export function runLegacyDryRun({ productLimit = 20000, outputPath } = {}) {
     validation: extracted.validation,
     partition: {
       counts: partition.counts,
+      category_gaps: summarizeCategoryGaps(extracted.mapped),
       review_reason_counts: partition.review.reduce((counts, row) => {
         counts[row.reason_code] = (counts[row.reason_code] ?? 0) + 1;
         return counts;

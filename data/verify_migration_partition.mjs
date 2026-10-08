@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { mapLegacyBatch } from "./migration/legacyContract.mjs";
-import { partitionLegacyBatch } from "./migration/partitionLegacyBatch.mjs";
+import { partitionLegacyBatch, summarizeCategoryGaps } from "./migration/partitionLegacyBatch.mjs";
 
 const batch = mapLegacyBatch({
   language: "en",
@@ -28,5 +28,20 @@ assert.equal(result.ready.products[0].order_no, "P-READY");
 assert.equal(result.review.filter((row) => row.reason_code === "DUPLICATE_MATECODE").length, 2);
 assert.equal(result.review.filter((row) => row.reason_code === "DUPLICATE_ORDER_NO").length, 2);
 assert.equal(result.review.filter((row) => row.reason_code === "ORPHAN_SERIES").length, 1);
+
+const categoryGaps = summarizeCategoryGaps(batch);
+assert.deepEqual(categoryGaps, [
+  { category_legacy_id: "1", source_category_exists: true, series_count: 3, product_count: 3 },
+]);
+
+const invalidCategoryBatch = mapLegacyBatch({
+  language: "en",
+  categories: [{ catid: 2, en_catname: "" }],
+  series: [{ id: 30, classify: 2, matecode: "S-BLOCKED", title: "Blocked series" }],
+  products: [],
+});
+const invalidCategoryResult = partitionLegacyBatch(invalidCategoryBatch);
+assert.equal(invalidCategoryResult.ready.series.length, 0);
+assert.equal(invalidCategoryResult.review[0].reason_code, "UNKNOWN_CATEGORY");
 
 console.log("PASS migration partition");

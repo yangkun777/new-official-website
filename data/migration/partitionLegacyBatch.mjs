@@ -34,10 +34,39 @@ function groups(rows, key) {
   return result;
 }
 
+export function summarizeCategoryGaps(batch) {
+  const sourceCategoryIds = new Set(batch.categories.map((row) => String(row.legacy_id)).filter(Boolean));
+  const productCountsBySeries = new Map();
+  for (const product of batch.products) {
+    if (!product.series_matecode) continue;
+    productCountsBySeries.set(product.series_matecode, (productCountsBySeries.get(product.series_matecode) ?? 0) + 1);
+  }
+
+  const summary = new Map();
+  for (const series of batch.series) {
+    const categoryId = series.category_legacy_id == null ? null : String(series.category_legacy_id);
+    const key = categoryId ?? "(empty)";
+    const current = summary.get(key) ?? {
+      category_legacy_id: categoryId,
+      source_category_exists: categoryId !== null && sourceCategoryIds.has(categoryId),
+      series_count: 0,
+      product_count: 0,
+    };
+    current.series_count += 1;
+    current.product_count += productCountsBySeries.get(series.matecode) ?? 0;
+    summary.set(key, current);
+  }
+  return [...summary.values()].sort((left, right) => {
+    if (left.source_category_exists !== right.source_category_exists) {
+      return left.source_category_exists ? -1 : 1;
+    }
+    return String(left.category_legacy_id).localeCompare(String(right.category_legacy_id));
+  });
+}
+
 export function partitionLegacyBatch(batch) {
   const review = [];
   const reject = [];
-  const categoryIds = new Set(batch.categories.map((row) => String(row.legacy_id)).filter(Boolean));
   const seriesByCode = groups(batch.series, "matecode");
   const productByOrder = groups(batch.products, "order_no");
 
@@ -49,6 +78,7 @@ export function partitionLegacyBatch(batch) {
     }
     readyCategories.push(row);
   }
+  const readyCategoryIds = new Set(readyCategories.map((row) => String(row.legacy_id)));
 
   const readySeries = [];
   const seriesReviewReasons = new Map();
@@ -62,7 +92,7 @@ export function partitionLegacyBatch(batch) {
     } else if (!row.name) {
       review.push(issue("MISSING_SERIES_NAME", "series", row, "series name is empty"));
       seriesReviewReasons.set(row.matecode, "MISSING_SERIES_NAME");
-    } else if (!categoryIds.has(String(row.category_legacy_id))) {
+    } else if (!readyCategoryIds.has(String(row.category_legacy_id))) {
       review.push(issue("UNKNOWN_CATEGORY", "series", row, `category ${row.category_legacy_id} is not active in the snapshot`));
       seriesReviewReasons.set(row.matecode, "SERIES_CATEGORY_REVIEW");
     } else {
