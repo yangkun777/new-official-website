@@ -16,6 +16,8 @@ const roboto = Roboto({
   display: "swap",
 });
 
+const IS_PRODUCTION = process.env.SITE_MODE === "production";
+
 /** 路径式语言路由：[lang] 是顶层段，本文件即根布局 */
 export function generateStaticParams() {
   return LANGS.map((lang) => ({ lang }));
@@ -40,6 +42,9 @@ export const metadata: Metadata = {
     description:
       "DEGSON industrial connection solutions — terminal blocks and connectors.",
   },
+  robots: IS_PRODUCTION
+    ? { index: true, follow: true }
+    : { index: false, follow: false },
 };
 
 export default async function LangLayout({

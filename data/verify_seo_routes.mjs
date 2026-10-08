@@ -39,6 +39,8 @@ assert.match(files.layout, /WebSite/);
 assert.match(files.layout, /serializeJsonLd/);
 assert.match(files.layout, /openGraph/);
 assert.match(files.layout, /twitter/);
+assert.match(files.layout, /index:\s*false/);
+assert.match(files.layout, /follow:\s*false/);
 for (const page of [files.home, files.newsList, files.news, files.series, files.category]) {
   assert.match(page, /socialMetadata/);
 }

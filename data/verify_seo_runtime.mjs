@@ -26,4 +26,7 @@ assert.match(llms.response.headers.get("content-type") ?? "", /text\/plain/);
 assert.match(llms.text, /# DEGSON/);
 assert.match(llms.text, /\/news/);
 
+const home = await get("/en");
+assert.match(home.text, /name="robots"[^>]+content="noindex, ?nofollow"/i);
+
 console.log(`PASS SEO runtime (${urls.length} sitemap URLs)`);
