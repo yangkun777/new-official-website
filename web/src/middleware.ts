@@ -14,6 +14,12 @@ export function middleware(req: NextRequest) {
 
   const policy = getSitePolicy();
   if (policy.mode === "production") {
+    const cnHostname = new URL(policy.siteUrl("zh", "/")).hostname;
+    const requestHostname = (req.headers.get("host") ?? req.nextUrl.hostname)
+      .split(":")[0]
+      .toLowerCase();
+    const isCnHost = requestHostname === cnHostname;
+    const hostLang = isCnHost ? "zh" : DEFAULT_LANG;
     // Production URL contract: English is the canonical root, while Chinese
     // lives on the separate CN domain. Both prefixed variants are normalized.
     const rest = pathname === "/" ? "/" : pathname.slice(first.length + 1) || "/";
@@ -21,12 +27,12 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(policy.siteUrl("zh", rest));
     }
     if (first === DEFAULT_LANG) {
-      return NextResponse.redirect(policy.siteUrl("en", rest));
+      return NextResponse.redirect(policy.siteUrl(hostLang, rest));
     }
     // Root and unprefixed English routes are canonical in production, but the
     // app router still uses the shared [lang] segment internally.
     const url = req.nextUrl.clone();
-    url.pathname = `/${DEFAULT_LANG}${pathname === "/" ? "" : pathname}`;
+    url.pathname = `/${hostLang}${pathname === "/" ? "" : pathname}`;
     return NextResponse.rewrite(url);
   }
 

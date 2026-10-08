@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 const base = process.env.PROD_URL ?? "http://localhost:3100";
+const cnBase = process.env.CN_PROD_URL ?? "http://127.0.0.1:3100";
 
 async function get(path) {
   return fetch(`${base}${path}`, { redirect: "manual" });
@@ -16,6 +17,13 @@ assert.match(await news.text(), /<html[^>]+lang="en"/i);
 
 const prefixedEn = await get("/en");
 assert.equal(prefixedEn.status, 307, `production /en should redirect, got ${prefixedEn.status}`);
-assert.equal(prefixedEn.headers.get("location"), "https://www.degson.com/");
+assert.equal(
+  new URL(prefixedEn.headers.get("location"), base).href,
+  process.env.MAIN_CANONICAL ?? "https://www.degson.com/",
+);
+
+const cnRoot = await fetch(cnBase, { redirect: "manual" });
+assert.equal(cnRoot.status, 200, `production CN root should render, got ${cnRoot.status}`);
+assert.match(await cnRoot.text(), /<html[^>]+lang="zh-Hans"/i);
 
 console.log("PASS production route contract");
