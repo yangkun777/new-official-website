@@ -78,6 +78,16 @@ if (report.errors.length > 0) {
 node data/verify_migration_contract.mjs
 ```
 
+真实旧库只读抽取预览：
+
+```powershell
+$env:MYSQL_PWD = "本机只读密码"
+node data/migration/extractLegacyBatch.mjs --product-limit=500
+node data/migration/buildAdjudicationReport.mjs
+```
+
+后一个命令生成重复系列码、重复订货号和孤儿系列引用的 CSV/Markdown 裁决清单。清单生成在 `data/migration/reports/`，默认不入 Git。
+
 ## 后续接入旧库前必须补充
 
 1. 明确只读导出方式和批次边界，不在迁移脚本中写入旧库。
