@@ -26,13 +26,15 @@ SELECT JSON_OBJECT(
   'language', 'en',
   'categories', COALESCE((
     SELECT JSON_ARRAYAGG(JSON_OBJECT(
-      'catid', id,
-      'relationid', relationid,
-      'title', title,
-      'thumb', thumb
+      'catid', catid,
+      'parentid', parentid,
+      'catname', catname,
+      'engname', engname,
+      'en_catname', en_catname,
+      'image', image
     ))
-    FROM hr_article
-    WHERE catid IN (547, 548, 549) AND language = 'en' AND status = '1'
+    FROM hr_category
+    WHERE isdel = 0
   ), JSON_ARRAY()),
   'series', COALESCE((
     SELECT JSON_ARRAYAGG(JSON_OBJECT(

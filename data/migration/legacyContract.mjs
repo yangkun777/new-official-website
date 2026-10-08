@@ -53,7 +53,7 @@ function mapCategory(row, language) {
   return {
     legacy_id: row.catid,
     parent_legacy_id: row.parent_id ?? row.parentid ?? row.relationid ?? null,
-    name: normalizeText(row.name ?? row.engname ?? row.en_catname ?? row.catname ?? row.title ?? row.classify),
+    name: normalizeText(row.name ?? row.en_catname ?? row.engname ?? row.catname ?? row.title ?? row.classify),
     image: normalizeText(row.image ?? row.thumb),
     language,
   };
