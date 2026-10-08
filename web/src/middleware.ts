@@ -4,8 +4,8 @@ import { getSitePolicy } from "@/lib/siteConfig";
 
 /**
  * 语言前缀收敛：
- *  - 首段已是受支持语言 → 放行
- *  - 否则把整条路径挂到默认语言下（/ → /en，/news → /en/news）
+ *  - Demo：首段已是受支持语言 → 放行，否则把路径挂到默认语言下
+ *  - Production：按域名选择英文/中文内部语言，浏览器 URL 保持 canonical 形态
  * 未受支持的语言码（如 /de/...）同样落到默认语言，一期只有 en / zh。
  */
 export function middleware(req: NextRequest) {
