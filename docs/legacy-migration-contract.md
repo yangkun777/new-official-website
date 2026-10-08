@@ -88,6 +88,15 @@ node data/migration/buildAdjudicationReport.mjs
 
 后一个命令生成重复系列码、重复订货号和孤儿系列引用的 CSV/Markdown 裁决清单。清单生成在 `data/migration/reports/`，默认不入 Git。
 
+旧 URL 迁移预览：
+
+```powershell
+$env:MYSQL_PWD = "本机只读密码"
+node data/migration/buildUrlRedirectPreview.mjs
+```
+
+该预览按分类、系列、SKU 生成候选新 URL，并对重复订货号标记 `REVIEW_DUPLICATE_ORDER_NO`。它不是可直接上线的 301 配置，必须经过 URL 总账和人工复核。
+
 ## 后续接入旧库前必须补充
 
 1. 明确只读导出方式和批次边界，不在迁移脚本中写入旧库。
