@@ -1,0 +1,117 @@
+import { readFileSync } from "node:fs";
+
+const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
+const tokenPath = process.env.DIRECTUS_ADMIN_TOKEN_FILE ?? "D:/degson-pilot/.admin_token";
+const TOKEN = process.env.DIRECTUS_ADMIN_TOKEN ?? readFileSync(tokenPath, "utf8").trim();
+const headers = { Authorization: `Bearer ${TOKEN}` };
+
+async function get(path) {
+  const response = await fetch(`${BASE}${path}`, { headers });
+  if (!response.ok) throw new Error(`GET ${path} failed: ${response.status}`);
+  return response.json();
+}
+
+const expectedNotes = {
+  "category.level": "层级：1 一级、2 二级、3 三级",
+  "category.parent_id": "上级分类；一级分类留空",
+  "category.sort": "数字越小越靠前",
+  "category.status": "仅发布状态会出现在官网",
+  "series.matecode": "系列码，发布后不要修改",
+  "series.category_id": "所属三级分类",
+  "product.order_no": "订货号，全库唯一；发布后不要修改",
+  "product.series_id": "所属产品系列",
+  "product.status": "仅发布状态会出现在官网",
+  "news.publish_date": "用于新闻排序和页面展示",
+  "news.status": "仅发布状态会出现在官网",
+  "category_translations.language": "语言码固定使用 en / zh",
+  "category_translations.slug": "URL slug；同一语言下必须唯一",
+  "series_translations.language": "语言码固定使用 en / zh",
+  "series_translations.slug": "URL slug；同一语言下必须唯一",
+  "product_translations.language": "语言码固定使用 en / zh",
+  "news_translations.language": "语言码固定使用 en / zh",
+  "news_translations.slug": "URL slug；同一语言下必须唯一",
+};
+
+const hiddenFields = [
+  "category.created_at", "category.updated_at",
+  "category_translations.created_at", "category_translations.updated_at",
+  "series.created_at", "series.updated_at",
+  "series_translations.created_at", "series_translations.updated_at",
+  "product.created_at", "product.updated_at",
+  "product_translations.created_at", "product_translations.updated_at",
+  "news.created_at", "news.updated_at",
+  "news_translations.created_at", "news_translations.updated_at",
+];
+
+const expectedTranslations = {
+  "category.level": "层级",
+  "category.parent_id": "上级分类",
+  "category.status": "发布状态",
+  "series.matecode": "系列码",
+  "series.category_id": "所属分类",
+  "product.order_no": "订货号",
+  "product.series_id": "所属系列",
+  "product.status": "发布状态",
+  "news.publish_date": "发布时间",
+  "news.status": "发布状态",
+  "category_translations.language": "语言",
+  "category_translations.name": "分类名称",
+  "category_translations.slug": "URL 标识",
+  "series_translations.language": "语言",
+  "series_translations.name": "系列名称",
+  "product_translations.language": "语言",
+  "product_translations.name": "产品名称",
+  "news_translations.language": "语言",
+  "news_translations.name": "新闻标题",
+  "news_translations.slug": "URL 标识",
+};
+
+const expectedCollectionTranslations = {
+  category: "产品分类",
+  category_translations: "分类翻译",
+  series: "产品系列",
+  series_translations: "系列翻译",
+  product: "产品",
+  product_translations: "产品翻译",
+  news: "新闻",
+  news_translations: "新闻翻译",
+};
+
+const expectedChecks = Object.keys(expectedNotes).length
+  + hiddenFields.length
+  + Object.keys(expectedTranslations).length
+  + Object.keys(expectedCollectionTranslations).length;
+
+const failures = [];
+for (const [key, note] of Object.entries(expectedNotes)) {
+  const [collection, field] = key.split(".");
+  const payload = await get(`/fields/${collection}/${field}`);
+  if (payload.data?.meta?.note !== note) failures.push(`${key}.note`);
+}
+for (const key of hiddenFields) {
+  const [collection, field] = key.split(".");
+  const payload = await get(`/fields/${collection}/${field}`);
+  if (payload.data?.meta?.hidden !== true) failures.push(`${key}.hidden`);
+}
+for (const [key, translation] of Object.entries(expectedTranslations)) {
+  const [collection, field] = key.split(".");
+  const payload = await get(`/fields/${collection}/${field}`);
+  const translations = payload.data?.meta?.translations ?? [];
+  if (!translations.some((item) => item.language === "zh-CN" && item.translation === translation)) {
+    failures.push(`${key}.translation`);
+  }
+}
+for (const [collection, translation] of Object.entries(expectedCollectionTranslations)) {
+  const payload = await get(`/collections/${collection}`);
+  const translations = payload.data?.meta?.translations ?? [];
+  if (!translations.some((item) => item.language === "zh-CN" && item.translation === translation)) {
+    failures.push(`${collection}.translation`);
+  }
+}
+
+if (failures.length) {
+  console.error(`FAIL ${failures.length}: ${failures.join(", ")}`);
+  process.exitCode = 1;
+} else {
+  console.log(`PASS ${expectedChecks}`);
+}
