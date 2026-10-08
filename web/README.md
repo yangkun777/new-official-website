@@ -21,6 +21,17 @@ http://localhost:3000/en/
 http://localhost:3000/zh/
 ```
 
+生产环境 URL 规则：
+
+```text
+SITE_MODE=production
+SITE_ORIGIN=https://www.degson.com
+CN_SITE_ORIGIN=https://www.degson.com.cn
+```
+
+生产英文站使用主域根路径（`/`），中文站使用 `CN_SITE_ORIGIN` 根路径；应用内部仍通过
+`/[lang]` 路由渲染。不要把生产环境的 `/en`、`/zh` 前缀 URL 当作 canonical 地址。
+
 ### 2. 启动前台
 
 ```powershell
