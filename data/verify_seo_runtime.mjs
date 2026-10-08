@@ -29,5 +29,8 @@ assert.match(llms.text, /\/news/);
 const home = await get("/en");
 assert.match(home.text, /name="robots"[^>]+content="noindex, ?nofollow"/i);
 assert.equal(home.response.headers.get("x-robots-tag"), "noindex, nofollow");
+assert.match(home.text, /rel="canonical"/i);
+assert.match(home.text, /hreflang="zh-Hans"/i);
+assert.match(home.text, /hreflang="x-default"/i);
 
 console.log(`PASS SEO runtime (${urls.length} sitemap URLs)`);
