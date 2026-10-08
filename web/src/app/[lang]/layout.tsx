@@ -26,6 +26,20 @@ export const metadata: Metadata = {
   title: { default: "DEGSON", template: "%s | DEGSON" },
   description:
     "DEGSON industrial connection solutions — terminal blocks and connectors.",
+  openGraph: {
+    type: "website",
+    siteName: "DEGSON",
+    title: "DEGSON",
+    description:
+      "DEGSON industrial connection solutions — terminal blocks and connectors.",
+    url: SITE_ORIGIN,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DEGSON",
+    description:
+      "DEGSON industrial connection solutions — terminal blocks and connectors.",
+  },
 };
 
 export default async function LangLayout({

@@ -34,5 +34,7 @@ assert.match(files.repo, /export async function getSeriesForSitemap/);
 assert.match(files.layout, /Organization/);
 assert.match(files.layout, /WebSite/);
 assert.match(files.layout, /serializeJsonLd/);
+assert.match(files.layout, /openGraph/);
+assert.match(files.layout, /twitter/);
 
 console.log("PASS SEO routes contract");
