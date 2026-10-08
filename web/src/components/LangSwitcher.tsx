@@ -13,10 +13,12 @@ export default function LangSwitcher({
   lang,
   path,
   available = [...LANGS],
+  paths,
 }: {
   lang: Lang;
   path: string;
   available?: Lang[];
+  paths?: Partial<Record<Lang, string>>;
 }) {
   const list = available.includes(lang) ? available : [lang, ...available];
 
@@ -31,7 +33,7 @@ export default function LangSwitcher({
             </span>
           ) : (
             <Link
-              href={siteUrl(code, path)}
+              href={siteUrl(code, paths?.[code] ?? path)}
               hrefLang={code === "zh" ? "zh-Hans" : code}
               className="text-slate-500 hover:text-[#003f88]"
             >

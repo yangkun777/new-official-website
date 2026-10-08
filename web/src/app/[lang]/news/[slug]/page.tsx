@@ -83,6 +83,12 @@ export default async function NewsDetailPage({ params }: PageProps) {
           lang={lang}
           path={`/news/${n.slug}`}
           available={found.availableLangs}
+          paths={Object.fromEntries(
+            Object.entries(found.slugs).map(([code, translatedSlug]) => [
+              code,
+              `/news/${translatedSlug}`,
+            ])
+          ) as Partial<Record<Lang, string>>}
         />
       </div>
       <h1 className="mt-6 text-3xl font-bold text-slate-900">{n.title}</h1>

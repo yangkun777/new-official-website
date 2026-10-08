@@ -551,6 +551,7 @@ export interface LocalizedNews {
   news: NewsDetail;
   resolvedLang: Lang;
   availableLangs: Lang[];
+  slugs: Partial<Record<Lang, string>>;
 }
 
 /** 新闻详情：slug 属于某一条翻译行，以该行语言为 canonical */
@@ -573,10 +574,16 @@ export async function getNewsBySlug(
   const own = n.translations.find((r) => r.slug === slug);
   if (!own || !LANGS.includes(own.language as Lang)) return null;
   const resolvedLang = own.language as Lang;
+  const slugs = Object.fromEntries(
+    n.translations
+      .filter((row) => LANGS.includes(row.language as Lang) && row.slug)
+      .map((row) => [row.language, row.slug as string])
+  ) as Partial<Record<Lang, string>>;
 
   return {
     resolvedLang,
     availableLangs: langsOf(n.translations),
+    slugs,
     news: {
       id: own.id,
       newsId: n.id,
