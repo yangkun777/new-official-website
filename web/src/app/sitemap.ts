@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getCategoriesForSitemap, getNewsList, getSeriesForSitemap } from "@/lib/repo";
+import { getCategoriesForSitemap, getNewsForSitemap, getSeriesForSitemap } from "@/lib/repo";
 import { LANGS, type Lang } from "@/lib/lang";
 import { siteUrl } from "@/lib/site";
 
@@ -16,8 +16,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     addUnique(entries, siteUrl(lang, "/news"));
 
     try {
-      const news = await getNewsList(lang);
-      for (const item of news) {
+      const limit = 500;
+      const first = await getNewsForSitemap(lang, 1, limit);
+      const pages = Math.max(1, Math.ceil(first.total / limit));
+      const newsPages = [first.items];
+      for (let page = 2; page <= pages; page++) {
+        const result = await getNewsForSitemap(lang, page, limit);
+        newsPages.push(result.items);
+      }
+      for (const item of newsPages.flat()) {
         if (item.slug) addUnique(entries, siteUrl(item.lang, `/news/${item.slug}`));
       }
     } catch {

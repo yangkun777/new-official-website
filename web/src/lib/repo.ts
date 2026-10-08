@@ -471,6 +471,10 @@ export async function getNewsList(lang: Lang): Promise<NewsListItem[]> {
     },
     CONTENT_TAGS.news
   );
+  return toNewsListItems(items, lang);
+}
+
+function toNewsListItems(items: RawNews[], lang: Lang): NewsListItem[] {
   const out: NewsListItem[] = [];
   for (const n of items) {
     const t = pickTranslation(n.translations, lang);
@@ -490,6 +494,27 @@ export async function getNewsList(lang: Lang): Promise<NewsListItem[]> {
   return out.sort((a, b) =>
     (b.publish_date ?? "").localeCompare(a.publish_date ?? "")
   );
+}
+
+/** Sitemap 用分页新闻读取：避免新闻超过单次 limit 后静默漏 URL。 */
+export async function getNewsForSitemap(
+  lang: Lang,
+  page: number,
+  limit = 500
+): Promise<{ items: NewsListItem[]; total: number }> {
+  const { items, total } = await apiGetList<RawNews>(
+    "/items/news",
+    {
+      "filter[status][_eq]": "published",
+      sort: "-publish_date",
+      limit: String(limit),
+      page: String(page),
+      fields: `id,publish_date,cover_image,status,${tf("translations")}`,
+      ...dfList("translations", lang),
+    },
+    CONTENT_TAGS.news
+  );
+  return { items: toNewsListItems(items, lang), total };
 }
 
 export interface LocalizedNews {
