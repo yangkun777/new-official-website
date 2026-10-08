@@ -46,6 +46,7 @@ assert.match(files.middleware, /NextResponse\.rewrite/);
 assert.match(files.middleware, /DEFAULT_LANG\}\$\{pathname === ["']\/["']/);
 assert.match(files.middleware, /req\.headers\.get\("host"\)/);
 assert.match(files.middleware, /hostLang = isCnHost \? "zh" : DEFAULT_LANG/);
+assert.match(files.middleware, /X-Robots-Tag/);
 for (const page of [files.home, files.newsList, files.news, files.series, files.category]) {
   assert.match(page, /socialMetadata/);
 }

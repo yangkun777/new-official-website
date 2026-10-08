@@ -37,11 +37,15 @@ export function middleware(req: NextRequest) {
   }
 
   if ((LANGS as readonly string[]).includes(first)) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
   }
   const url = req.nextUrl.clone();
   url.pathname = `/${DEFAULT_LANG}${pathname === "/" ? "" : pathname}`;
-  return NextResponse.redirect(url);
+  const response = NextResponse.redirect(url);
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return response;
 }
 
 export const config = {
