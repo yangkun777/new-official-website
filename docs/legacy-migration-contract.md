@@ -97,6 +97,22 @@ node data/migration/buildUrlRedirectPreview.mjs
 
 该预览按分类、系列、SKU 生成候选新 URL，并对重复订货号标记 `REVIEW_DUPLICATE_ORDER_NO`。它不是可直接上线的 301 配置，必须经过 URL 总账和人工复核。
 
+## 全量只读 dry-run 分层
+
+`data/migration/runLegacyDryRun.mjs` 会读取快照中的全部系列和 SKU（默认最多 20,000 条 SKU），但只在内存中映射和分层，不向旧库或新库写入。输出分为：
+
+- `READY`：身份、关联和必填字段满足当前导入门槛。
+- `REVIEW`：需要业务裁决后才能导入，例如重复系列码、重复订货号、系列分类缺失或孤儿系列引用。
+- `REJECT`：当前批次结构不满足最低数据契约，例如分类没有旧 ID 或名称。
+
+```powershell
+$env:MYSQL_PWD = "本机只读密码"
+node data/migration/runLegacyDryRun.mjs --product-limit=20000
+node data/verify_migration_partition.mjs
+```
+
+本次快照的结果记录在 `docs/legacy-dry-run-2026-10-08.md`。特别注意：快照中的系列 `classify` 值（如 `231914`）不在当前 `hr_category` 有效分类表中，不能在导入时擅自创建或猜测分类；这部分必须补齐旧分类来源、建立分类映射，或由业务确认新的分类归属。
+
 ## 后续接入旧库前必须补充
 
 1. 明确只读导出方式和批次边界，不在迁移脚本中写入旧库。

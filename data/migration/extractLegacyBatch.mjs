@@ -16,8 +16,8 @@ function option(name, fallback) {
 }
 
 export function buildExtractionSql(productLimit = 500) {
-  if (!Number.isInteger(productLimit) || productLimit < 1 || productLimit > 5000) {
-    throw new Error("productLimit must be an integer from 1 to 5000");
+  if (!Number.isInteger(productLimit) || productLimit < 1 || productLimit > 20000) {
+    throw new Error("productLimit must be an integer from 1 to 20000");
   }
 
   return `
