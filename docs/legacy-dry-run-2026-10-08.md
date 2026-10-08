@@ -75,3 +75,13 @@
 本次未发现重复旧 URL。7 条目标冲突来自不同旧分类生成相同 slug，例如 `Accessories`、`PV-DC Connector`、`450A Conductive Pillar`；6 条重复订货号涉及 `21010000138`、`21010000001`、`21010000440`。这些记录都不能在没有业务裁决的情况下自动生成确定性 301。
 
 预览脚本现在还会把重复旧 URL标记为 `REVIEW_SOURCE_URL_COLLISION`，把重复新目标标记为 `REVIEW_TARGET_COLLISION`，并保留原有的重复系列码/订货号状态。
+
+## 分类映射审核模板
+
+已增加 `data/migration/buildCategoryMapTemplate.mjs`，从 dry-run JSON 生成不含任何猜测目标的审核模板：
+
+```powershell
+node data/migration/buildCategoryMapTemplate.mjs
+```
+
+本次生成 176 个有效分类 ID 的 CSV/Markdown 模板；空分类 ID 被过滤。模板中的 `target_id`、`reviewer`、`reason` 均为空，`status` 为 `PENDING`，不能直接作为 `--category-map` 导入参数。
