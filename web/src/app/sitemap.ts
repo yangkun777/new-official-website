@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getCategoriesByLevel, getNewsList, getSeriesForSitemap } from "@/lib/repo";
+import { getCategoriesForSitemap, getNewsList, getSeriesForSitemap } from "@/lib/repo";
 import { LANGS, type Lang } from "@/lib/lang";
 import { siteUrl } from "@/lib/site";
 
@@ -26,8 +26,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const level of [1, 2, 3]) {
       try {
-        const categories = await getCategoriesByLevel(level, lang);
-        for (const category of categories) {
+        const limit = 500;
+        const first = await getCategoriesForSitemap(level, lang, 1, limit);
+        const pages = Math.max(1, Math.ceil(first.total / limit));
+        const categoryPages = [first.items];
+        for (let page = 2; page <= pages; page++) {
+          const result = await getCategoriesForSitemap(level, lang, page, limit);
+          categoryPages.push(result.items);
+        }
+        for (const category of categoryPages.flat()) {
           if (category.slug) {
             addUnique(entries, siteUrl(category.lang as Lang, `/product/category/${category.slug}`));
           }

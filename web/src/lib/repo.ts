@@ -183,6 +183,34 @@ export async function getCategoriesByLevel(
     .filter((c): c is SubCategoryCard => c !== null);
 }
 
+/** Sitemap 用分页分类读取：避免单次 limit 截断全量分类 URL。 */
+export async function getCategoriesForSitemap(
+  level: number,
+  lang: Lang,
+  page: number,
+  limit = 500
+): Promise<{ items: SubCategoryCard[]; total: number }> {
+  const { items, total } = await apiGetList<RawCatNode>(
+    "/items/category",
+    {
+      "filter[level][_eq]": String(level),
+      "filter[status][_eq]": "published",
+      sort: "sort",
+      limit: String(limit),
+      page: String(page),
+      fields: `id,level,sort,status,image,${tf("translations")}`,
+      ...dfList("translations", lang),
+    },
+    CONTENT_TAGS.category
+  );
+  return {
+    items: items
+      .map((n) => toSubCard(n, lang))
+      .filter((c): c is SubCategoryCard => c !== null),
+    total,
+  };
+}
+
 export interface LocalizedCategory {
   category: Category;
   /** 该 slug 行真正所属的语言——canonical 用 */
