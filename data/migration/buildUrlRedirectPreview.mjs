@@ -47,7 +47,7 @@ export function mapRedirects(rows, origin = TARGET_ORIGIN) {
     if (row.catid === 552 && row.order_no) productCounts.set(row.order_no, (productCounts.get(row.order_no) ?? 0) + 1);
   }
 
-  return rows.map((row) => {
+  const mapped = rows.map((row) => {
     let target_path = "";
     let status = "REVIEW_UNCLASSIFIED";
     if ([547, 548, 549].includes(row.catid)) {
@@ -70,6 +70,23 @@ export function mapRedirects(rows, origin = TARGET_ORIGIN) {
       status,
       target_url: target_path ? `${origin.replace(/\/+$/, "")}${target_path}` : "",
     };
+  });
+
+  const sourceCounts = new Map();
+  const targetCounts = new Map();
+  for (const row of mapped) {
+    if (row.old_url) sourceCounts.set(row.old_url, (sourceCounts.get(row.old_url) ?? 0) + 1);
+    if (row.target_url) targetCounts.set(row.target_url, (targetCounts.get(row.target_url) ?? 0) + 1);
+  }
+
+  return mapped.map((row) => {
+    if (row.old_url && sourceCounts.get(row.old_url) > 1) {
+      return { ...row, status: "REVIEW_SOURCE_URL_COLLISION" };
+    }
+    if (row.status === "OK" && row.target_url && targetCounts.get(row.target_url) > 1) {
+      return { ...row, status: "REVIEW_TARGET_COLLISION" };
+    }
+    return row;
   });
 }
 
@@ -112,6 +129,7 @@ export function buildPreview(outputDir = path.resolve("data/migration/reports"))
     "- 系列：`/product/series/{matecode}`",
     "- SKU：`/product/{order_no}`",
     "- 重复系列码或订货号不自动生成确定性目标。",
+    "- 重复旧 URL 或重复新目标 URL 不自动生成确定性 301。",
     "",
     `完整明细见同目录 CSV：${path.basename(csvPath)}`,
     "",

@@ -15,4 +15,15 @@ assert.equal(rows[1].status, "OK");
 assert.equal(rows[2].status, "REVIEW_DUPLICATE_ORDER_NO");
 assert.equal(rows[3].status, "REVIEW_DUPLICATE_ORDER_NO");
 
+const collisionRows = mapRedirects([
+  { id: 10, catid: 549, old_url: "/old/category-a.html", title: "Same Category", order_no: "", matecode: "", classify: "" },
+  { id: 11, catid: 549, old_url: "/old/category-b.html", title: "Same Category", order_no: "", matecode: "", classify: "" },
+  { id: 12, catid: 549, old_url: "/old/shared.html", title: "Category A", order_no: "", matecode: "", classify: "" },
+  { id: 13, catid: 549, old_url: "/old/shared.html", title: "Category B", order_no: "", matecode: "", classify: "" },
+]);
+assert.equal(collisionRows[0].status, "REVIEW_TARGET_COLLISION");
+assert.equal(collisionRows[1].status, "REVIEW_TARGET_COLLISION");
+assert.equal(collisionRows[2].status, "REVIEW_SOURCE_URL_COLLISION");
+assert.equal(collisionRows[3].status, "REVIEW_SOURCE_URL_COLLISION");
+
 console.log("PASS URL redirect preview");
