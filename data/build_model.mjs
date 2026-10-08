@@ -72,15 +72,15 @@ async function ensureRelation(collection, field, related, oneField = null, onDel
   });
   if (r.status >= 200 && r.status < 300) { console.log(`      ↔ 关系 ${collection}.${field} → ${related}${oneField ? `  (O2M 别名: ${oneField})` : ''}`); ok++; return true; }
   if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) {
-    // 已存在：确保 one_field 别名已设置（幂等补齐）
-    if (oneField) {
-      const p = await api('PATCH', `/relations/${collection}/${field}`, {
-        meta: { many_collection: collection, many_field: field, one_collection: related, one_field: oneField, one_deselect_action: 'nullify' },
-      });
-      if (p.status >= 200 && p.status < 300) { console.log(`      ↔ 补齐 O2M 别名 ${related}.${oneField}`); ok++; }
-      else { console.log(`      ✗ 补齐 O2M 别名失败 ${p.status}: ${JSON.stringify(p.json).slice(0, 180)}`); fail++; failures.push(`o2m:${related}.${oneField}`); }
+    // Directus 11.17.4 的 PATCH /relations 路径可能导致服务崩溃。
+    // 已存在关系只报告状态；别名不一致必须通过 snapshot/受控重建修复。
+    if (oneField && JSON.stringify(r.json).includes(oneField)) {
+      console.log(`      = 关系已存在且包含 O2M 别名 ${related}.${oneField}`);
+      skip++; return true;
     }
-    skip++; return true;
+    console.log(`      ✗ 关系已存在但无法确认 O2M 别名；请导出 snapshot 后人工修复 ${related}.${oneField}`);
+    fail++; failures.push(`o2m:${related}.${oneField}`);
+    return false;
   }
   console.log(`      ✗ 关系 ${collection}.${field} 失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 200)}`);
   fail++; failures.push(`rel:${collection}.${field}`);
@@ -129,7 +129,7 @@ if (await ensureCollection('category', '产品分类（一级/二级/三级；�
 // ---------- 2. series ----------
 console.log('\n### series');
 if (await ensureCollection('series', '产品系列（matecode = 系列码，语言无关）')) {
-  await ensureField('series', 'matecode', 'string', { max_length: 32, is_nullable: false }, { required: true });
+  await ensureField('series', 'matecode', 'string', { max_length: 32, is_nullable: false, is_unique: true, is_indexed: true }, { required: true });
   await ensureField('series', 'category_id', 'integer', { is_nullable: true });
   await ensureField('series', 'image', 'string', { max_length: 512, is_nullable: true });
   await ensureField('series', 'sort', 'integer', { is_nullable: true, default_value: 0 });
@@ -143,7 +143,7 @@ if (await ensureCollection('series', '产品系列（matecode = 系列码，语�
 console.log('\n### product');
 if (await ensureCollection('product', '产品变体（order_no = 订货号，全库唯一；语言无关字段）')) {
   await ensureField('product', 'title', 'string', { max_length: 255, is_nullable: true }, { note: '型号，语言无关（如 15EDGK-3.5）' });
-  await ensureField('product', 'order_no', 'string', { max_length: 64, is_nullable: false }, { required: true });
+  await ensureField('product', 'order_no', 'string', { max_length: 64, is_nullable: false, is_unique: true, is_indexed: true }, { required: true });
   await ensureField('product', 'series_id', 'integer', { is_nullable: true });
   await ensureField('product', 'poles', 'string', { max_length: 16, is_nullable: true });
   await ensureField('product', 'pitch', 'string', { max_length: 16, is_nullable: true });
