@@ -53,6 +53,8 @@ corepack pnpm exec next build
 ```powershell
 node data/verify_base.mjs
 node data/verify_m1_web.mjs
+# 生产 URL / 双域名路由（需先启动 production server）
+node data/verify_production_routes.mjs
 ```
 
 数据库约束和数据自检：
