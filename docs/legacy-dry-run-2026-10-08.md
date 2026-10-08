@@ -84,4 +84,4 @@
 node data/migration/buildCategoryMapTemplate.mjs
 ```
 
-本次生成 176 个有效分类 ID 的 CSV/Markdown 模板；空分类 ID 被过滤。模板中的 `target_id`、`reviewer`、`reason` 均为空，`status` 为 `PENDING`，不能直接作为 `--category-map` 导入参数。
+本次生成 176 个有效分类 ID 的 CSV/Markdown 模板；空分类 ID 被过滤。模板中的 `target_id`、`reviewer`、`reason` 均为空，`status` 为 `PENDING`，不能直接作为 `--category-map` 导入参数。每行另附最多 3 个“代表系列”（系列码 + 系列名）作为旧数据证据，不代表分类名称。
