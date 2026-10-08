@@ -23,8 +23,11 @@ export function middleware(req: NextRequest) {
     if (first === DEFAULT_LANG) {
       return NextResponse.redirect(policy.siteUrl("en", rest));
     }
-    // Root and unprefixed English routes are already canonical in production.
-    return NextResponse.next();
+    // Root and unprefixed English routes are canonical in production, but the
+    // app router still uses the shared [lang] segment internally.
+    const url = req.nextUrl.clone();
+    url.pathname = `/${DEFAULT_LANG}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url);
   }
 
   if ((LANGS as readonly string[]).includes(first)) {

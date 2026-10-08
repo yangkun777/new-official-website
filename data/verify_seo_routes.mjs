@@ -11,6 +11,7 @@ const files = {
   category: fs.readFileSync("web/src/app/[lang]/product/category/[slug]/page.tsx", "utf8"),
   repo: fs.readFileSync("web/src/lib/repo.ts", "utf8"),
   layout: fs.readFileSync("web/src/app/[lang]/layout.tsx", "utf8"),
+  middleware: fs.readFileSync("web/src/middleware.ts", "utf8"),
   home: fs.readFileSync("web/src/app/[lang]/page.tsx", "utf8"),
   newsList: fs.readFileSync("web/src/app/[lang]/news/page.tsx", "utf8"),
 };
@@ -41,6 +42,8 @@ assert.match(files.layout, /openGraph/);
 assert.match(files.layout, /twitter/);
 assert.match(files.layout, /index:\s*false/);
 assert.match(files.layout, /follow:\s*false/);
+assert.match(files.middleware, /NextResponse\.rewrite/);
+assert.match(files.middleware, /DEFAULT_LANG\}\$\{pathname === ["']\/["']/);
 for (const page of [files.home, files.newsList, files.news, files.series, files.category]) {
   assert.match(page, /socialMetadata/);
 }
