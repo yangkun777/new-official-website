@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getNewsList } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
-import { absUrl, hreflangMap, localePath } from "@/lib/site";
+import { hreflangMap, siteUrl } from "@/lib/site";
 import NewsCard from "@/components/NewsCard";
 import LangSwitcher from "@/components/LangSwitcher";
 
@@ -22,7 +22,7 @@ export async function generateMetadata({
       ? "德昌最新动态与产品资讯。"
       : "Latest updates and product news from DEGSON.",
     alternates: {
-      canonical: absUrl(localePath(lang, "/news")),
+      canonical: siteUrl(lang, "/news"),
       languages: hreflangMap("/news"),
     },
   };

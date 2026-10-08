@@ -10,7 +10,7 @@ import {
   getRelatedSeries,
 } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
-import { absUrl, hreflangMap, localePath } from "@/lib/site";
+import { hreflangMap, siteUrl } from "@/lib/site";
 import type { Crumb, Series } from "@/types/product";
 
 export const revalidate = 60;
@@ -35,7 +35,7 @@ export async function generateMetadata({
       `${s.name} series from DEGSON`
     ).slice(0, 160),
     alternates: {
-      canonical: absUrl(localePath(found.resolvedLang, path)),
+      canonical: siteUrl(found.resolvedLang, path),
       languages: hreflangMap(path, found.availableLangs),
     },
   };
@@ -43,8 +43,8 @@ export async function generateMetadata({
 
 function buildCrumbs(s: Series, lang: Lang): Crumb[] {
   const crumbs: Crumb[] = [
-    { id: 0, title: "Home", href: localePath(lang, "/") },
-    { id: 0, title: "Products", href: localePath(lang, "/#products") },
+    { id: 0, title: "Home", href: siteUrl(lang, "/") },
+    { id: 0, title: "Products", href: siteUrl(lang, "/#products") },
   ];
   const c3 = s.category_id;
   if (c3) {
@@ -55,13 +55,13 @@ function buildCrumbs(s: Series, lang: Lang): Crumb[] {
       crumbs.push({
         id: l2.id,
         title: l2.name,
-        href: localePath(lang, `/product/category/${l2.slug}`),
+        href: siteUrl(lang, `/product/category/${l2.slug}`),
       });
     }
     crumbs.push({
       id: c3.id,
       title: c3.name,
-      href: localePath(lang, `/product/category/${c3.slug}`),
+      href: siteUrl(lang, `/product/category/${c3.slug}`),
     });
   }
   crumbs.push({ id: s.id, title: s.name, current: true });
@@ -77,7 +77,7 @@ export default async function SeriesPage({ params }: PageProps) {
 
   // matecode 与语言无关，但翻译可能缺失 → 收敛到真正有内容的语言页
   if (found.resolvedLang !== lang) {
-    redirect(localePath(found.resolvedLang, `/product/series/${matecode}`));
+    redirect(siteUrl(found.resolvedLang, `/product/series/${matecode}`));
   }
 
   const series = found.series;
@@ -98,7 +98,7 @@ export default async function SeriesPage({ params }: PageProps) {
         sku: variants.map((v) => v.order_no).filter(Boolean),
         ...(mainImage ? { image: mainImage } : {}),
         description: series.description ?? `${series.name} series`,
-        url: absUrl(localePath(lang, `/product/series/${series.matecode}`)),
+        url: siteUrl(lang, `/product/series/${series.matecode}`),
       },
       {
         "@type": "BreadcrumbList",
@@ -106,7 +106,7 @@ export default async function SeriesPage({ params }: PageProps) {
           "@type": "ListItem",
           position: i + 1,
           name: c.title,
-          ...(c.href ? { item: absUrl(c.href) } : {}),
+          ...(c.href ? { item: c.href } : {}),
         })),
       },
     ],

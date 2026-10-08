@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSiteSettings, getCategoriesByLevel } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
-import { absUrl, hreflangMap, localePath } from "@/lib/site";
+import { hreflangMap, siteUrl } from "@/lib/site";
 
 export const revalidate = 60;
 
@@ -16,7 +16,7 @@ export async function generateMetadata({
   const lang = toLang((await params).lang);
   return {
     alternates: {
-      canonical: absUrl(localePath(lang, "/")),
+      canonical: siteUrl(lang, "/"),
       languages: hreflangMap("/"),
     },
   };
@@ -62,7 +62,7 @@ export default async function Home({ params }: PageProps) {
           {level1.map((c) => (
             <Link
               key={c.id}
-              href={localePath(c.lang, `/product/category/${c.slug}`)}
+                href={siteUrl(c.lang, `/product/category/${c.slug}`)}
               className="group block rounded-xl border border-slate-200 bg-white p-6 transition-all duration-150 hover:-translate-y-0.5 hover:border-[#003f88]/30 hover:shadow-lg"
             >
               <div className="flex items-start justify-between gap-2">
@@ -97,7 +97,7 @@ export default async function Home({ params }: PageProps) {
             {(["en", "zh"] as const).map((l) => (
               <Link
                 key={l}
-                href={localePath(l, "/news")}
+                href={siteUrl(l, "/news")}
                 className="font-medium text-[#003f88] hover:underline"
               >
                 {l === "zh" ? "中文新闻" : "English news"}

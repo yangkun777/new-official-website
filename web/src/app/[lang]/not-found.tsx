@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { DEFAULT_LANG } from "@/lib/lang";
-import { localePath } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
 
 export default function NotFound() {
   return (
@@ -13,7 +13,7 @@ export default function NotFound() {
         该页面不存在，或对应内容尚未发布 / 暂无该语言版本。
       </p>
       <Link
-        href={localePath(DEFAULT_LANG, "/")}
+        href={siteUrl(DEFAULT_LANG, "/")}
         className="mt-6 font-medium text-[#003f88] hover:underline"
       >
         ← Back to home

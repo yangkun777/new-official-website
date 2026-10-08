@@ -2,7 +2,7 @@ import Link from "next/link";
 import ProductImage from "./ProductImage";
 import type { SubCategoryCard } from "@/types/product";
 import type { Lang } from "@/lib/lang";
-import { localePath } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
 
 export default function CategoryCard({
   category,
@@ -13,7 +13,7 @@ export default function CategoryCard({
 }) {
   return (
     <Link
-      href={localePath(category.lang, `/product/category/${category.slug}`)}
+      href={siteUrl(category.lang, `/product/category/${category.slug}`)}
       className="group block overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-[#003f88]/30 hover:shadow-lg"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-50">
