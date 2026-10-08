@@ -21,12 +21,12 @@
 | 旧数据 | 新模型 | 清洗规则 |
 |---|---|---|
 | `hr_category.catid` | `category.legacy_id` | 保留源 ID，作为迁移追踪字段 |
-| `hr_category.parent_id` | `category.parent_legacy_id` | 空值表示根节点 |
-| `hr_category.classify` | `category_translations.name` | 去除首尾空格，合并连续空白 |
-| `hr_category.thumb` | `category.image` | 空字符串转 null |
+| `hr_category.parentid` | `category.parent_legacy_id` | 空值或 0 表示根节点 |
+| `hr_category.engname / en_catname / catname` | `category_translations.name` | 按语言选择字段，去除首尾空格 |
+| `hr_category.image` | `category.image` | 空字符串转 null |
+| `hr_article.classify`（catid=550） | `series.category_legacy_id` | 旧库中该字段是分类 ID，不是系列名称 |
 | `hr_article.matecode` | `series.matecode` | 去除首尾空格，禁止空值和重复 |
-| `hr_article.catid` | `series.category_legacy_id` | 导入时必须能关联到分类 |
-| `hr_article.classify` | `series_translations.name` | 去除首尾空格，保留空值告警 |
+| `hr_article.title`（catid=550） | `series_translations.name` | 去除首尾空格，空值回退系列码并告警 |
 | `hr_article.text` | `product.order_no` | 去除首尾空格，禁止空值和重复 |
 | `hr_article.matecode` | `product.series_matecode` | 必须能关联到已导入系列 |
 | `hr_article.title` | `product.title` | 去除首尾空格，空值告警 |

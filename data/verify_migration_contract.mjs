@@ -12,10 +12,10 @@ assert.equal(LEGACY_FIELD_MAP.product.order_no, "text");
 const mapped = mapLegacyBatch({
   language: "en",
   categories: [
-    { catid: 231582, parent_id: 231580, classify: " PCB Plug ", thumb: "pcb.jpg" },
+    { catid: 231582, parentid: 231580, en_catname: " PCB Plug ", image: "pcb.jpg" },
   ],
   series: [
-    { id: 10, catid: 231582, matecode: " 10030005326 ", classify: "PCB Plug Series", thumb: "series.jpg" },
+    { id: 10, classify: "231582", matecode: " 10030005326 ", title: "PCB Plug Series", thumb: "series.jpg" },
   ],
   products: [
     { id: 20, catid: 552, matecode: "10030005326", text: " DG271V-2-102 ", title: "DG271V", text1: "3.5", text2: "2" },
@@ -24,7 +24,7 @@ const mapped = mapLegacyBatch({
 
 assert.deepEqual(mapped.series[0], {
   legacy_id: 10,
-  category_legacy_id: 231582,
+  category_legacy_id: "231582",
   matecode: "10030005326",
   name: "PCB Plug Series",
   image: "series.jpg",

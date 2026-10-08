@@ -9,15 +9,15 @@
 export const LEGACY_FIELD_MAP = {
   category: {
     id: "catid",
-    parent_id: "parent_id",
-    name: "classify",
-    image: "thumb",
+    parent_id: "parentid",
+    name: "engname / en_catname / catname",
+    image: "image",
   },
   series: {
     id: "id",
-    category_id: "catid",
+    category_id: "classify",
     matecode: "matecode",
-    name: "classify",
+    name: "title",
     image: "thumb",
     description: "description",
   },
@@ -57,9 +57,9 @@ function normalizeNumber(value, field, errors, legacyId) {
 function mapCategory(row, language) {
   return {
     legacy_id: row.catid,
-    parent_legacy_id: row.parent_id ?? null,
-    name: normalizeText(row.classify),
-    image: normalizeText(row.thumb),
+    parent_legacy_id: row.parent_id ?? row.parentid ?? row.relationid ?? null,
+    name: normalizeText(row.name ?? row.engname ?? row.en_catname ?? row.catname ?? row.title ?? row.classify),
+    image: normalizeText(row.image ?? row.thumb),
     language,
   };
 }
@@ -67,9 +67,9 @@ function mapCategory(row, language) {
 function mapSeries(row, language) {
   return {
     legacy_id: row.id,
-    category_legacy_id: row.catid,
+    category_legacy_id: row.category_id ?? row.classify ?? row.catid,
     matecode: normalizeIdentity(row.matecode),
-    name: normalizeText(row.classify),
+    name: normalizeText(row.name ?? row.title ?? row.classify ?? row.matecode),
     image: normalizeText(row.thumb),
     language,
   };
