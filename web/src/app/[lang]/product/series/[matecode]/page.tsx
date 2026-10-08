@@ -11,6 +11,7 @@ import {
 } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
 import { hreflangMap, siteUrl } from "@/lib/site";
+import { serializeJsonLd } from "@/lib/seo";
 import type { Crumb, Series } from "@/types/product";
 
 export const revalidate = 60;
@@ -116,7 +117,7 @@ export default async function SeriesPage({ params }: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <Breadcrumb items={crumbs} />
       <section className="border-b border-slate-200 bg-slate-50">

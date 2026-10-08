@@ -7,6 +7,7 @@ import { hreflangMap, siteUrl } from "@/lib/site";
 import LangSwitcher from "@/components/LangSwitcher";
 import ProductImage from "@/components/ProductImage";
 import { sanitizeRichText } from "@/lib/contentSafety";
+import { serializeJsonLd } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -46,9 +47,28 @@ export default async function NewsDetailPage({ params }: PageProps) {
 
   const n = found.news;
   const isZh = lang === "zh";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: n.title,
+    description: n.summary ?? n.title,
+    datePublished: n.publish_date ?? undefined,
+    image: n.cover_image ? [n.cover_image] : undefined,
+    inLanguage: lang === "zh" ? "zh-Hans" : "en",
+    mainEntityOfPage: siteUrl(lang, `/news/${n.slug}`),
+    publisher: {
+      "@type": "Organization",
+      name: "DEGSON",
+      url: siteUrl("en", "/"),
+    },
+  };
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href={siteUrl(lang, "/news")}

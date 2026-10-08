@@ -5,6 +5,10 @@ const files = {
   robots: fs.readFileSync("web/src/app/robots.ts", "utf8"),
   sitemap: fs.readFileSync("web/src/app/sitemap.ts", "utf8"),
   llms: fs.readFileSync("web/src/app/llms.txt/route.ts", "utf8"),
+  seo: fs.readFileSync("web/src/lib/seo.ts", "utf8"),
+  news: fs.readFileSync("web/src/app/[lang]/news/[slug]/page.tsx", "utf8"),
+  series: fs.readFileSync("web/src/app/[lang]/product/series/[matecode]/page.tsx", "utf8"),
+  category: fs.readFileSync("web/src/app/[lang]/product/category/[slug]/page.tsx", "utf8"),
 };
 
 assert.match(files.robots, /MetadataRoute\.Robots/);
@@ -17,5 +21,11 @@ assert.match(files.sitemap, /siteUrl/);
 assert.match(files.llms, /text\/plain/);
 assert.match(files.llms, /siteUrl/);
 assert.match(files.llms, /Response/);
+assert.match(files.seo, /serializeJsonLd/);
+assert.match(files.seo, /\\\\u003c/);
+assert.match(files.news, /NewsArticle/);
+assert.match(files.news, /serializeJsonLd/);
+assert.doesNotMatch(files.series, /JSON\.stringify\(jsonLd\)/);
+assert.doesNotMatch(files.category, /JSON\.stringify\(jsonLd\)/);
 
 console.log("PASS SEO routes contract");
