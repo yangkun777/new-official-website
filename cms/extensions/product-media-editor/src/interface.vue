@@ -104,7 +104,7 @@ export default {
 <style scoped>
 .media-editor { display: grid; gap: 12px; }
 .preview-card { display: grid; grid-template-columns: 160px 1fr auto; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--theme--border-color); border-radius: 8px; background: var(--theme--background-subdued); }
-.preview-stage { width: 160px; height: 120px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: white; }
+.preview-stage { width: 280px; height: 190px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: white; }
 .preview-stage img { width: 100%; height: 100%; object-fit: contain; }
 .preview-loading { color: var(--theme--foreground-subdued); font-size: 12px; }
 .file-meta { min-width: 0; display: grid; gap: 4px; }
