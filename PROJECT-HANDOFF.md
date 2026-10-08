@@ -324,6 +324,7 @@ product.title / order_no / poles / pitch → 留在主表，变体表不用改
 | `data/verify_m1_web.mjs` | **前台端到端验收（34 项）**，改前台后必跑 |
 | `data/03_seed.sql` | 从旧库底料 `degson_legacy` 生成业务数据 |
 | `data/99_verify.sql` | 数据自检（**字段已变，跑之前先按新模型更新**） |
+| `data/migration/buildCategoryMapTemplate.mjs` | 从 dry-run 生成不带猜测目标的分类映射审核模板 |
 
 **模型变更的唯一正确流程**：
 ```
