@@ -5,13 +5,14 @@ const base = process.env.WEB_URL ?? "http://localhost:3000";
 async function get(path) {
   const response = await fetch(`${base}${path}`);
   const text = await response.text();
-  assert.equal(response.status, 200, `${path} should return 200`);
+assert.equal(response.status, 200, `${path} should return 200`);
   return { response, text };
 }
 
 const robots = await get("/robots.txt");
 assert.match(robots.response.headers.get("content-type") ?? "", /text\/plain/);
-assert.match(robots.text, /Sitemap:\s+\S+\/sitemap\.xml/);
+assert.match(robots.text, /Disallow:\s+\//);
+assert.doesNotMatch(robots.text, /Sitemap:/);
 
 const sitemap = await get("/sitemap.xml");
 assert.match(sitemap.response.headers.get("content-type") ?? "", /application\/xml/);

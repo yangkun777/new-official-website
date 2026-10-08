@@ -18,6 +18,7 @@ const files = {
 assert.match(files.robots, /MetadataRoute\.Robots/);
 assert.match(files.robots, /sitemap/);
 assert.match(files.robots, /Disallow|disallow/);
+assert.match(files.robots, /SITE_MODE/);
 assert.match(files.sitemap, /MetadataRoute\.Sitemap/);
 assert.match(files.sitemap, /getNewsList/);
 assert.match(files.sitemap, /getCategoriesByLevel/);
