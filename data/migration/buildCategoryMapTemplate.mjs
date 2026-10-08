@@ -7,6 +7,17 @@ function csvCell(value) {
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
+function formatSampleSeries(value) {
+  if (typeof value === "string") return value;
+  return (value ?? [])
+    .map((series) => {
+      const identity = series.matecode ?? series.legacy_id ?? "(no identity)";
+      const name = series.name ?? "(unnamed)";
+      return `${identity}: ${name}`;
+    })
+    .join("; ");
+}
+
 function normalizedRows(categoryGaps) {
   return [...(categoryGaps ?? [])]
     .filter((row) => String(row.category_legacy_id ?? row.legacy_category_id ?? "").trim() !== "")
@@ -19,11 +30,12 @@ function normalizedRows(categoryGaps) {
       reason: row.reason ?? "",
       series_count: row.series_count ?? 0,
       product_count: row.product_count ?? 0,
+      sample_series: formatSampleSeries(row.sample_series),
     }));
 }
 
 export function renderCategoryMapCsv(categoryGaps) {
-  const headers = ["legacy_category_id", "target_id", "status", "reviewer", "reason", "series_count", "product_count"];
+  const headers = ["legacy_category_id", "target_id", "status", "reviewer", "reason", "series_count", "product_count", "sample_series"];
   const rows = normalizedRows(categoryGaps);
   return `${[headers, ...rows.map((row) => headers.map((key) => csvCell(row[key])))].map((row) => row.join(",")).join("\n")}\n`;
 }
@@ -38,9 +50,9 @@ export function renderCategoryMapMarkdown(categoryGaps, generatedAt = new Date()
     "",
     "> 这是人工审核模板，不能直接作为导入映射，也不能直接传给 `--category-map`。只有业务确认目标分类、审核人和理由后，才能转换成正式映射。",
     "",
-    "| legacy_category_id | target_id | status | reviewer | reason | series_count | product_count |",
-    "|---:|---|---|---|---|---:|---:|",
-    ...rows.map((row) => `| ${row.legacy_category_id} |  | ${row.status} |  |  | ${row.series_count} | ${row.product_count} |`),
+    "| legacy_category_id | target_id | status | reviewer | reason | series_count | product_count | 代表系列 |",
+    "|---:|---|---|---|---|---:|---:|---|",
+    ...rows.map((row) => `| ${row.legacy_category_id} |  | ${row.status} |  |  | ${row.series_count} | ${row.product_count} | ${row.sample_series.replaceAll("|", "\\|")} |`),
     "",
     "## 审核要求",
     "",

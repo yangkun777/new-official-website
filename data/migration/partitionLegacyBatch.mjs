@@ -62,9 +62,17 @@ export function summarizeCategoryGaps(batch, { categoryMap = {} } = {}) {
       external_map_exists: categoryId !== null && externalCategoryIds.has(categoryId),
       series_count: 0,
       product_count: 0,
+      sample_series: [],
     };
     current.series_count += 1;
     current.product_count += productCountsBySeries.get(series.matecode) ?? 0;
+    if (current.sample_series.length < 3) {
+      current.sample_series.push({
+        legacy_id: series.legacy_id == null ? null : String(series.legacy_id),
+        matecode: series.matecode ?? null,
+        name: series.name ?? null,
+      });
+    }
     summary.set(key, current);
   }
   return [...summary.values()].sort((left, right) => {

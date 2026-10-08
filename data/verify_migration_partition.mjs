@@ -31,7 +31,18 @@ assert.equal(result.review.filter((row) => row.reason_code === "ORPHAN_SERIES").
 
 const categoryGaps = summarizeCategoryGaps(batch);
 assert.deepEqual(categoryGaps, [
-  { category_legacy_id: "1", source_category_exists: true, external_map_exists: false, series_count: 3, product_count: 3 },
+  {
+    category_legacy_id: "1",
+    source_category_exists: true,
+    external_map_exists: false,
+    series_count: 3,
+    product_count: 3,
+    sample_series: [
+      { legacy_id: "10", matecode: "S-READY", name: "Ready series" },
+      { legacy_id: "11", matecode: "S-DUP", name: "Duplicate A" },
+      { legacy_id: "12", matecode: "S-DUP", name: "Duplicate B" },
+    ],
+  },
 ]);
 
 const invalidCategoryBatch = mapLegacyBatch({
@@ -64,6 +75,7 @@ assert.deepEqual(summarizeCategoryGaps(mappedCategoryBatch, {
   external_map_exists: true,
   series_count: 1,
   product_count: 1,
+  sample_series: [{ legacy_id: "40", matecode: "S-MAPPED", name: "Mapped series" }],
 }]);
 
 console.log("PASS migration partition");
