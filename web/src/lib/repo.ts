@@ -30,6 +30,9 @@ import type { NewsListItem, NewsDetail } from "@/types/news";
 const TRANS_FIELDS =
   "id,language,name,slug,seo_title,seo_description,h1,short_description,description";
 
+/** Directus 常见默认 LIMIT_MAX 为 100；分页读取不请求更大的单页，避免服务端截断却页数算错。 */
+const PAGINATION_LIMIT = 100;
+
 /** 展开成 Directus 嵌套 fields 语法：translations.name,translations.slug,... */
 function tf(prefix: string): string {
   return TRANS_FIELDS.split(",")
@@ -210,7 +213,7 @@ export async function getCategoriesByLevel(
   level: number,
   lang: Lang
 ): Promise<SubCategoryCard[]> {
-  const limit = 500;
+  const limit = PAGINATION_LIMIT;
   const first = await getCategoryPage({ level, lang, page: 1, limit });
   const pages = Math.max(1, Math.ceil(first.total / limit));
   const all = [...first.items];
@@ -226,7 +229,7 @@ export async function getCategoriesForSitemap(
   level: number,
   lang: Lang,
   page: number,
-  limit = 500
+  limit = PAGINATION_LIMIT
 ): Promise<{ items: SubCategoryCard[]; total: number }> {
   return getCategoryPage({ level, lang, page, limit });
 }
@@ -288,7 +291,7 @@ export async function getSubCategories(
   parentId: number,
   lang: Lang
 ): Promise<SubCategoryCard[]> {
-  const limit = 500;
+  const limit = PAGINATION_LIMIT;
   const first = await getCategoryPage({ parentId, lang, page: 1, limit });
   const pages = Math.max(1, Math.ceil(first.total / limit));
   const all = [...first.items];
@@ -349,7 +352,7 @@ export async function getSeriesByCategory(
 export async function getSeriesForSitemap(
   lang: Lang,
   page: number,
-  limit = 500
+  limit = PAGINATION_LIMIT
 ): Promise<{ items: SeriesListItem[]; total: number }> {
   const { items, total } = await apiGetList<RawSeriesNode>(
     "/items/series",
@@ -446,7 +449,7 @@ export async function getRelatedSeries(
 // ---------------------------------------------------------------------------
 
 export async function getVariants(seriesId: number): Promise<Variant[]> {
-  const limit = 500;
+  const limit = PAGINATION_LIMIT;
   const getPage = (page: number) =>
     apiGetList<Variant>(
       "/items/product",
@@ -527,7 +530,7 @@ function toNewsListItems(items: RawNews[], lang: Lang): NewsListItem[] {
 export async function getNewsForSitemap(
   lang: Lang,
   page: number,
-  limit = 500
+  limit = PAGINATION_LIMIT
 ): Promise<{ items: NewsListItem[]; total: number }> {
   const { items, total } = await apiGetList<RawNews>(
     "/items/news",

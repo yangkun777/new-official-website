@@ -9,6 +9,7 @@ const checks = [
   ["legacy migration contract", ["data/verify_migration_contract.mjs"]],
   ["variant pagination", ["data/verify_variant_pagination.mjs"]],
   ["category pagination", ["data/verify_category_pagination.mjs"]],
+  ["pagination limits", ["data/verify_pagination_limits.mjs"]],
   ["model builder syntax", ["--check", "data/build_model.mjs"]],
 ];
 
@@ -21,5 +22,5 @@ for (const [label, args] of checks) {
   process.stdout.write(`PASS ${label}\n`);
 }
 
-assert.equal(checks.length, 8);
+assert.equal(checks.length, 9);
 console.log("PASS base hardening verifier");

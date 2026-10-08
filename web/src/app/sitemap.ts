@@ -28,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     addUnique(entries, siteUrl(lang, "/news"));
 
     try {
-      const limit = 500;
+      const limit = 100;
       const first = await getNewsForSitemap(lang, 1, limit);
       const pages = Math.max(1, Math.ceil(first.total / limit));
       const newsPages = [first.items];
@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const level of [1, 2, 3]) {
       try {
-        const limit = 500;
+        const limit = 100;
         const first = await getCategoriesForSitemap(level, lang, 1, limit);
         const pages = Math.max(1, Math.ceil(first.total / limit));
         const categoryPages = [first.items];
@@ -70,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     try {
-      const limit = 500;
+      const limit = 100;
       const first = await getSeriesForSitemap(lang, 1, limit);
       const pages = Math.max(1, Math.ceil(first.total / limit));
       for (const series of first.items) {
