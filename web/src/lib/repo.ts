@@ -16,6 +16,8 @@ import type {
   SubCategoryCard,
   SiteSettings,
   Variant,
+  ProductDetail,
+  ProductMedia,
 } from "@/types/product";
 import type { NewsListItem, NewsDetail } from "@/types/news";
 
@@ -472,6 +474,110 @@ export async function getVariants(seriesId: number): Promise<Variant[]> {
     all.push(...result.items);
   }
   return all;
+}
+
+// ---------------------------------------------------------------------------
+// SKU 产品详情
+// ---------------------------------------------------------------------------
+
+interface RawProductMedia {
+  id: number;
+  kind: string;
+  sort?: number | null;
+  is_primary?: boolean | null;
+  media_id?: {
+    id: number;
+    kind: string;
+    file_id: string | null;
+    language: string | null;
+    alt: string | null;
+    caption: string | null;
+    sort?: number | null;
+    status?: string | null;
+  } | null;
+}
+
+interface RawProduct {
+  id: number;
+  order_no: string;
+  title: string | null;
+  poles: string | null;
+  pitch: string | null;
+  combined_title: string | null;
+  status: string;
+  translations: TranslationRow[];
+  media_links?: RawProductMedia[];
+}
+
+export interface LocalizedProduct {
+  product: ProductDetail;
+  resolvedLang: Lang;
+  availableLangs: Lang[];
+}
+
+export async function getProductByOrderNo(
+  orderNo: string,
+  lang: Lang,
+): Promise<LocalizedProduct | null> {
+  const { items } = await apiGetList<RawProduct>(
+    "/items/product",
+    {
+      "filter[order_no][_eq]": orderNo,
+      "filter[status][_eq]": "published",
+      limit: "1",
+      fields: [
+        "id,order_no,title,poles,pitch,combined_title,status",
+        tf("translations"),
+        "media_links.id,media_links.kind,media_links.sort,media_links.is_primary",
+        "media_links.media_id.id,media_links.media_id.kind,media_links.media_id.file_id",
+        "media_links.media_id.language,media_links.media_id.alt,media_links.media_id.caption",
+        "media_links.media_id.sort,media_links.media_id.status",
+      ].join(","),
+      ...dfList("translations", lang),
+    },
+    CONTENT_TAGS.product,
+  );
+  const node = items[0];
+  if (!node) return null;
+
+  const picked = pickTranslation(node.translations, lang);
+  if (!picked) return null;
+
+  const media: ProductMedia[] = (node.media_links ?? [])
+    .filter((link) => link.media_id?.status !== "draft")
+    .map((link) => ({
+      id: link.id,
+      kind: link.kind,
+      sort: link.sort ?? link.media_id?.sort ?? 0,
+      is_primary: Boolean(link.is_primary),
+      url: resolveMediaUrl(link.media_id?.file_id),
+      alt: link.media_id?.alt ?? null,
+      caption: link.media_id?.caption ?? null,
+    }))
+    .filter((item) => item.url !== null)
+    .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort - b.sort || a.id - b.id);
+
+  const row = picked.row;
+  return {
+    resolvedLang: row.language as Lang,
+    availableLangs: langsOf(node.translations),
+    product: {
+      id: node.id,
+      order_no: node.order_no,
+      title: node.title,
+      poles: node.poles,
+      pitch: node.pitch,
+      combined_title: node.combined_title,
+      name: row.name ?? node.title ?? node.order_no,
+      slug: row.slug ?? node.order_no,
+      h1: row.h1,
+      short_description: row.short_description,
+      description: row.description,
+      seo_title: row.seo_title,
+      seo_description: row.seo_description,
+      media,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------

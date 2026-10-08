@@ -95,6 +95,35 @@ export interface Variant {
   pitch: string | null;
 }
 
+export type ProductMediaKind = "product_main" | "product_detail" | "product_diagram";
+
+export interface ProductMedia {
+  id: number;
+  kind: ProductMediaKind | string;
+  sort: number;
+  is_primary: boolean;
+  url: string | null;
+  alt: string | null;
+  caption: string | null;
+}
+
+export interface ProductDetail {
+  id: number;
+  order_no: string;
+  title: string | null;
+  poles: string | null;
+  pitch: string | null;
+  combined_title: string | null;
+  name: string;
+  slug: string;
+  h1: string | null;
+  short_description: string | null;
+  description: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  media: ProductMedia[];
+}
+
 export interface Crumb {
   id: number;
   title: string;

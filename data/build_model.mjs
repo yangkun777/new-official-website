@@ -15,7 +15,10 @@ import { dirname, join } from 'node:path';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
 const BASE = process.env.DIRECTUS_URL || 'http://localhost:8055';
-const TOKEN = readFileSync(join(ROOT, '.admin_token'), 'utf8').trim();
+const TOKEN = readFileSync(
+  process.env.DIRECTUS_ADMIN_TOKEN_FILE ?? join(ROOT, '.admin_token'),
+  'utf8',
+).trim();
 
 let ok = 0, skip = 0, fail = 0;
 const failures = [];
@@ -72,6 +75,20 @@ async function ensureRelation(collection, field, related, oneField = null, onDel
   });
   if (r.status >= 200 && r.status < 300) { console.log(`      ↔ 关系 ${collection}.${field} → ${related}${oneField ? `  (O2M 别名: ${oneField})` : ''}`); ok++; return true; }
   if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) {
+    if (!oneField) {
+      console.log(`      = 关系已存在 ${collection}.${field} → ${related}`);
+      skip++;
+      return true;
+    }
+    const existing = await api('GET', '/relations');
+    const match = (existing.json?.data || []).find(
+      (item) => item.collection === collection && item.field === field && item.related_collection === related,
+    );
+    if (match?.meta?.one_field === oneField) {
+      console.log(`      = 关系已存在且包含 O2M 别名 ${related}.${oneField}`);
+      skip++;
+      return true;
+    }
     // Directus 11.17.4 的 PATCH /relations 路径可能导致服务崩溃。
     // 已存在关系只报告状态；别名不一致必须通过 snapshot/受控重建修复。
     if (oneField && JSON.stringify(r.json).includes(oneField)) {
@@ -90,6 +107,7 @@ async function ensureRelation(collection, field, related, oneField = null, onDel
 const TS_CREATED = { interface: 'datetime', readonly: true, special: ['date-created'], width: 'half' };
 const TS_UPDATED = { interface: 'datetime', readonly: true, special: ['date-updated'], width: 'half' };
 const RICH = { interface: 'input-rich-text-html' };
+const FILE = { interface: 'file' };
 
 /** 翻译表统一字段模板（★ 四个翻译集合完全一致，运营心智只有一套） */
 async function buildTranslation(collection, parentCollection, parentField, note) {
@@ -130,6 +148,7 @@ if (await ensureCollection('category', '产品分类（一级/二级/三级；�
 console.log('\n### series');
 if (await ensureCollection('series', '产品系列（matecode = 系列码，语言无关）')) {
   await ensureField('series', 'matecode', 'string', { max_length: 32, is_nullable: false, is_unique: true, is_indexed: true }, { required: true });
+  await ensureFieldSchema('series', 'matecode', { is_unique: true, is_indexed: true });
   await ensureField('series', 'category_id', 'integer', { is_nullable: true });
   await ensureField('series', 'image', 'string', { max_length: 512, is_nullable: true });
   await ensureField('series', 'sort', 'integer', { is_nullable: true, default_value: 0 });
@@ -144,6 +163,7 @@ console.log('\n### product');
 if (await ensureCollection('product', '产品变体（order_no = 订货号，全库唯一；语言无关字段）')) {
   await ensureField('product', 'title', 'string', { max_length: 255, is_nullable: true }, { note: '型号，语言无关（如 15EDGK-3.5）' });
   await ensureField('product', 'order_no', 'string', { max_length: 64, is_nullable: false, is_unique: true, is_indexed: true }, { required: true });
+  await ensureFieldSchema('product', 'order_no', { is_unique: true, is_indexed: true });
   await ensureField('product', 'series_id', 'integer', { is_nullable: true });
   await ensureField('product', 'poles', 'string', { max_length: 16, is_nullable: true });
   await ensureField('product', 'pitch', 'string', { max_length: 16, is_nullable: true });
@@ -152,6 +172,72 @@ if (await ensureCollection('product', '产品变体（order_no = 订货号，全
   await ensureField('product', 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
   await ensureField('product', 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
   await ensureRelation('product', 'series_id', 'series', null, 'CASCADE');
+}
+
+/** 建反向 O2M 别名字段；Directus 不会自动从 relation meta 创建它。 */
+async function ensureAliasField(collection, field, note) {
+  const r = await api('POST', `/fields/${collection}`, {
+    field,
+    type: 'alias',
+    meta: {
+      special: ['o2m'],
+      interface: 'list-o2m',
+      options: { template: '{{kind}}', enableCreate: true, enableSelect: true },
+      display: 'related-values',
+      display_options: { template: '{{kind}} — {{sort}}' },
+      note,
+    },
+  });
+  if (r.status >= 200 && r.status < 300) { console.log(`      + ${field} (O2M alias)`); ok++; return true; }
+  if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) { skip++; return true; }
+  console.log(`      ✗ ${collection}.${field} 别名失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`alias:${collection}.${field}`);
+  return false;
+}
+
+/** 补齐已有字段的约束元数据；历史建模可能已创建字段但没有索引。 */
+async function ensureFieldSchema(collection, field, schema) {
+  const current = await api('GET', `/fields/${collection}/${field}`);
+  const currentSchema = current.json?.data?.schema ?? {};
+  const needsPatch = Object.entries(schema).some(([key, value]) => currentSchema[key] !== value);
+  if (!needsPatch) { skip++; return true; }
+  const r = await api('PATCH', `/fields/${collection}/${field}`, { schema });
+  if (r.status >= 200 && r.status < 300) {
+    console.log(`      ↻ ${collection}.${field} 约束已补齐`);
+    ok++;
+    return true;
+  }
+  console.log(`      ✗ ${collection}.${field} 约束失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`schema:${collection}.${field}`);
+  return false;
+}
+
+// ---------- 3.1 product media ----------
+console.log('\n### media');
+if (await ensureCollection('media', '统一媒体元数据（文件本体保存在 Directus 文件库）')) {
+  await ensureField('media', 'file_id', 'string', { max_length: 36, is_nullable: true }, { ...FILE });
+  await ensureField('media', 'kind', 'string', { max_length: 32, is_nullable: false }, { required: true, note: 'product_main/product_detail 等用途' });
+  await ensureField('media', 'language', 'string', { max_length: 8, is_nullable: true }, { note: '为空表示语言无关' });
+  await ensureField('media', 'alt', 'string', { max_length: 255, is_nullable: true });
+  await ensureField('media', 'caption', 'text', { is_nullable: true });
+  await ensureField('media', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('media', 'status', 'string', { max_length: 16, is_nullable: true, default_value: 'published' });
+  await ensureField('media', 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
+  await ensureField('media', 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
+  await ensureRelation('media', 'file_id', 'directus_files', null, 'SET NULL');
+}
+
+console.log('\n### product_media');
+if (await ensureCollection('product_media', 'SKU 媒体关联（主图/详情图/工程图按用途和顺序管理）')) {
+  await ensureField('product_media', 'product_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_media', 'media_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_media', 'kind', 'string', { max_length: 32, is_nullable: false }, { required: true });
+  await ensureField('product_media', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('product_media', 'is_primary', 'boolean', { is_nullable: true, default_value: false });
+  await ensureAliasField('product', 'media_links', 'SKU 媒体关联');
+  await ensureAliasField('media', 'product_links', '被 SKU 引用的媒体');
+  await ensureRelation('product_media', 'product_id', 'product', 'media_links', 'CASCADE');
+  await ensureRelation('product_media', 'media_id', 'media', 'product_links', 'CASCADE');
 }
 
 // ---------- 4. news ----------
