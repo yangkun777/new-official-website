@@ -113,6 +113,25 @@ node data/verify_migration_partition.mjs
 
 本次快照的结果记录在 `docs/legacy-dry-run-2026-10-08.md`。特别注意：快照中的系列 `classify` 值（如 `231914`）不在当前 `hr_category` 有效分类表中，不能在导入时擅自创建或猜测分类；这部分必须补齐旧分类来源、建立分类映射，或由业务确认新的分类归属。
 
+如果已经有经过确认的旧分类到新分类映射，可以只在 dry-run 中预演，不会写库：
+
+```json
+{
+  "231582": { "target_id": "new-category-connectors" },
+  "231583": { "target_id": "new-category-terminal-blocks" }
+}
+```
+
+保存为本地忽略文件后执行：
+
+```powershell
+node data/migration/runLegacyDryRun.mjs `
+  --product-limit=20000 `
+  --category-map=data/migration/reports/category-map.preview.json
+```
+
+映射只会影响 `READY/REVIEW` 预演和分类缺口统计；它不是正式导入配置，也不会自动创建分类、修改旧库或修改新库。
+
 ## 后续接入旧库前必须补充
 
 1. 明确只读导出方式和批次边界，不在迁移脚本中写入旧库。
