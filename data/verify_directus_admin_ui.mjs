@@ -21,6 +21,12 @@ const expectedNotes = {
   "product.order_no": "订货号，全库唯一；发布后不要修改",
   "product.series_id": "所属产品系列",
   "product.status": "仅发布状态会出现在官网",
+  "product.title": "型号",
+  "product.poles": "极数",
+  "product.pitch": "节距",
+  "product.combined_title": "组合标题",
+  "product.translations": "多语言内容",
+  "product.media_links": "产品图片",
   "media.file_id": "媒体文件",
   "media.kind": "媒体用途",
   "media.language": "媒体语言",
@@ -28,12 +34,12 @@ const expectedNotes = {
   "media.caption": "图片说明",
   "media.sort": "排序",
   "media.status": "发布状态",
-  "product_media.file_id": "媒体文件",
+  "product_media.file_id": "图片：支持大图预览、上传、替换和清除",
   "product_media.product_id": "关联产品",
-  "product_media.media_id": "媒体",
-  "product_media.kind": "关联用途",
-  "product_media.sort": "排序",
-  "product_media.is_primary": "主图",
+  "product_media.media_id": "高级：复用媒体库中的已有媒体；普通上传请使用图片字段",
+  "product_media.kind": "图片用途",
+  "product_media.sort": "显示顺序",
+  "product_media.is_primary": "设为主图",
   "news.publish_date": "用于新闻排序和页面展示",
   "news.status": "仅发布状态会出现在官网",
   "category_translations.language": "语言码固定使用 en / zh",
@@ -65,6 +71,12 @@ const expectedTranslations = {
   "product.order_no": "订货号",
   "product.series_id": "所属系列",
   "product.status": "发布状态",
+  "product.title": "型号",
+  "product.poles": "极数",
+  "product.pitch": "节距",
+  "product.combined_title": "组合标题",
+  "product.translations": "多语言内容",
+  "product.media_links": "产品图片",
   "media.file_id": "媒体文件",
   "media.kind": "媒体用途",
   "media.language": "媒体语言",
@@ -72,12 +84,12 @@ const expectedTranslations = {
   "media.caption": "图片说明",
   "media.sort": "排序",
   "media.status": "发布状态",
-  "product_media.file_id": "媒体文件",
+  "product_media.file_id": "图片",
   "product_media.product_id": "关联产品",
   "product_media.media_id": "媒体",
-  "product_media.kind": "关联用途",
-  "product_media.sort": "排序",
-  "product_media.is_primary": "主图",
+  "product_media.kind": "图片用途",
+  "product_media.sort": "显示顺序",
+  "product_media.is_primary": "设为主图",
   "news.publish_date": "发布时间",
   "news.status": "发布状态",
   "category_translations.language": "语言",
@@ -132,11 +144,17 @@ for (const [key, translation] of Object.entries(expectedTranslations)) {
 
 for (const [key, interfaceName] of Object.entries({
   "media.file_id": "file",
-  "product_media.file_id": "file",
+  "product_media.file_id": "product-media-editor",
 })) {
   const [collection, field] = key.split(".");
   const payload = await get(`/fields/${collection}/${field}`);
   if (payload.data?.meta?.interface !== interfaceName) failures.push(`${key}.interface`);
+}
+if ((await get("/fields/product_media/media_id")).data?.meta?.hidden !== true) {
+  failures.push("product_media.media_id.hidden");
+}
+if ((await get("/fields/product_media/kind")).data?.meta?.interface !== "select-dropdown") {
+  failures.push("product_media.kind.interface");
 }
 for (const [collection, translation] of Object.entries(expectedCollectionTranslations)) {
   const payload = await get(`/collections/${collection}`);

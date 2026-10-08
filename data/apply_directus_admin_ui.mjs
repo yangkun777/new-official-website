@@ -32,6 +32,30 @@ async function patchCollection(collection, meta) {
   }
 }
 
+const mediaEditorMeta = {
+  "product_media.file_id": {
+    interface: "product-media-editor",
+    note: "图片：支持大图预览、上传、替换和清除",
+    width: "full",
+  },
+  "product_media.media_id": {
+    hidden: true,
+    note: "高级：复用媒体库中的已有媒体；普通上传请使用图片字段",
+  },
+  "product_media.kind": {
+    interface: "select-dropdown",
+    options: {
+      choices: [
+        { text: "主图", value: "product_main" },
+        { text: "详情图", value: "product_detail" },
+        { text: "工程图", value: "product_diagram" },
+      ],
+    },
+  },
+  "product_media.sort": { width: "half" },
+  "product_media.is_primary": { interface: "boolean", width: "half" },
+};
+
 const expectedNotes = {
   "category.level": "层级：1 一级、2 二级、3 三级",
   "category.parent_id": "上级分类；一级分类留空",
@@ -42,6 +66,12 @@ const expectedNotes = {
   "product.order_no": "订货号，全库唯一；发布后不要修改",
   "product.series_id": "所属产品系列",
   "product.status": "仅发布状态会出现在官网",
+  "product.title": "型号",
+  "product.poles": "极数",
+  "product.pitch": "节距",
+  "product.combined_title": "组合标题",
+  "product.translations": "多语言内容",
+  "product.media_links": "产品图片",
   "media.file_id": "媒体文件",
   "media.kind": "媒体用途",
   "media.language": "媒体语言",
@@ -49,12 +79,12 @@ const expectedNotes = {
   "media.caption": "图片说明",
   "media.sort": "排序",
   "media.status": "发布状态",
-  "product_media.file_id": "媒体文件",
+  "product_media.file_id": "图片：支持大图预览、上传、替换和清除",
   "product_media.product_id": "关联产品",
-  "product_media.media_id": "媒体",
-  "product_media.kind": "关联用途",
-  "product_media.sort": "排序",
-  "product_media.is_primary": "主图",
+  "product_media.media_id": "高级：复用媒体库中的已有媒体；普通上传请使用图片字段",
+  "product_media.kind": "图片用途",
+  "product_media.sort": "显示顺序",
+  "product_media.is_primary": "设为主图",
   "news.publish_date": "用于新闻排序和页面展示",
   "news.status": "仅发布状态会出现在官网",
   "category_translations.language": "语言码固定使用 en / zh",
@@ -86,6 +116,12 @@ const expectedTranslations = {
   "product.order_no": "订货号",
   "product.series_id": "所属系列",
   "product.status": "发布状态",
+  "product.title": "型号",
+  "product.poles": "极数",
+  "product.pitch": "节距",
+  "product.combined_title": "组合标题",
+  "product.translations": "多语言内容",
+  "product.media_links": "产品图片",
   "media.file_id": "媒体文件",
   "media.kind": "媒体用途",
   "media.language": "媒体语言",
@@ -93,12 +129,12 @@ const expectedTranslations = {
   "media.caption": "图片说明",
   "media.sort": "排序",
   "media.status": "发布状态",
-  "product_media.file_id": "媒体文件",
+  "product_media.file_id": "图片",
   "product_media.product_id": "关联产品",
   "product_media.media_id": "媒体",
-  "product_media.kind": "关联用途",
-  "product_media.sort": "排序",
-  "product_media.is_primary": "主图",
+  "product_media.kind": "图片用途",
+  "product_media.sort": "显示顺序",
+  "product_media.is_primary": "设为主图",
   "news.publish_date": "发布时间",
   "news.status": "发布状态",
   "category_translations.language": "语言",
@@ -138,8 +174,12 @@ for (const [key, translation] of Object.entries(expectedTranslations)) {
   const [collection, field] = key.split(".");
   await patchField(collection, field, { translations: [{ language: "zh-CN", translation }] });
 }
+for (const [key, meta] of Object.entries(mediaEditorMeta)) {
+  const [collection, field] = key.split(".");
+  await patchField(collection, field, meta);
+}
 for (const [collection, translation] of Object.entries(expectedCollectionTranslations)) {
   await patchCollection(collection, { translations: [{ language: "zh-CN", translation }] });
 }
 
-console.log(`UPDATED ${Object.keys(expectedNotes).length + hiddenFields.length + Object.keys(expectedTranslations).length + Object.keys(expectedCollectionTranslations).length}`);
+console.log(`UPDATED ${Object.keys(expectedNotes).length + hiddenFields.length + Object.keys(expectedTranslations).length + Object.keys(expectedCollectionTranslations).length + Object.keys(mediaEditorMeta).length}`);

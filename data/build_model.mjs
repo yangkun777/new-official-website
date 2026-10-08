@@ -172,6 +172,11 @@ if (await ensureCollection('product', '产品变体（order_no = 订货号，全
   await ensureField('product', 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
   await ensureField('product', 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
   await ensureRelation('product', 'series_id', 'series', null, 'CASCADE');
+  await ensureFieldMeta('product', 'title', { translations: [{ language: 'zh-CN', translation: '型号' }] });
+  await ensureFieldMeta('product', 'poles', { translations: [{ language: 'zh-CN', translation: '极数' }] });
+  await ensureFieldMeta('product', 'pitch', { translations: [{ language: 'zh-CN', translation: '节距' }] });
+  await ensureFieldMeta('product', 'combined_title', { translations: [{ language: 'zh-CN', translation: '组合标题' }] });
+  await ensureFieldMeta('product', 'translations', { translations: [{ language: 'zh-CN', translation: '多语言内容' }] });
 }
 
 /** 建反向 O2M 别名字段；Directus 不会自动从 relation meta 创建它。 */
@@ -260,8 +265,29 @@ if (await ensureCollection('product_media', 'SKU 媒体关联（主图/详情图
   await ensureField('product_media', 'sort', 'integer', { is_nullable: true, default_value: 0 });
   await ensureField('product_media', 'is_primary', 'boolean', { is_nullable: true, default_value: false });
   await ensureFieldSchema('product_media', 'media_id', { is_nullable: true });
-  await ensureFieldMeta('product_media', 'file_id', { interface: 'file', note: '媒体文件' });
+  await ensureFieldMeta('product_media', 'file_id', {
+    interface: 'product-media-editor',
+    note: '图片：支持大图预览、上传、替换和清除',
+    width: 'full',
+  });
+  await ensureFieldMeta('product_media', 'media_id', {
+    hidden: true,
+    note: '高级：复用媒体库中的已有媒体；普通上传请使用图片字段',
+  });
+  await ensureFieldMeta('product_media', 'kind', {
+    interface: 'select-dropdown',
+    options: {
+      choices: [
+        { text: '主图', value: 'product_main' },
+        { text: '详情图', value: 'product_detail' },
+        { text: '工程图', value: 'product_diagram' },
+      ],
+    },
+  });
+  await ensureFieldMeta('product_media', 'sort', { width: 'half' });
+  await ensureFieldMeta('product_media', 'is_primary', { interface: 'boolean', width: 'half' });
   await ensureAliasField('product', 'media_links', 'SKU 媒体关联');
+  await ensureFieldMeta('product', 'media_links', { translations: [{ language: 'zh-CN', translation: '产品图片' }] });
   await ensureAliasField('media', 'product_links', '被 SKU 引用的媒体');
   await ensureRelation('product_media', 'product_id', 'product', 'media_links', 'CASCADE');
   await ensureRelation('product_media', 'media_id', 'media', 'product_links', 'CASCADE');

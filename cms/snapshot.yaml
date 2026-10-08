@@ -2777,14 +2777,16 @@ fields:
       group: null
       hidden: false
       interface: null
-      note: null
+      note: 极数
       options: null
       readonly: false
       required: false
       searchable: true
       sort: 4
       special: null
-      translations: null
+      translations:
+        - language: zh-CN
+          translation: 极数
       validation: null
       validation_message: null
       width: full
@@ -2817,14 +2819,16 @@ fields:
       group: null
       hidden: false
       interface: null
-      note: null
+      note: 节距
       options: null
       readonly: false
       required: false
       searchable: true
       sort: 5
       special: null
-      translations: null
+      translations:
+        - language: zh-CN
+          translation: 节距
       validation: null
       validation_message: null
       width: full
@@ -2857,14 +2861,16 @@ fields:
       group: null
       hidden: false
       interface: null
-      note: null
+      note: 组合标题
       options: null
       readonly: false
       required: false
       searchable: true
       sort: 6
       special: null
-      translations: null
+      translations:
+        - language: zh-CN
+          translation: 组合标题
       validation: null
       validation_message: null
       width: full
@@ -3021,14 +3027,16 @@ fields:
       group: null
       hidden: false
       interface: null
-      note: 型号，语言无关（如 15EDGK-3.5）
+      note: 型号
       options: null
       readonly: false
       required: false
       searchable: true
       sort: 10
       special: null
-      translations: null
+      translations:
+        - language: zh-CN
+          translation: 型号
       validation: null
       validation_message: null
       width: full
@@ -3062,7 +3070,7 @@ fields:
       group: null
       hidden: false
       interface: list-o2m
-      note: 翻译行（每语言一行）
+      note: 多语言内容
       options:
         enableCreate: true
         enableSelect: true
@@ -3073,7 +3081,9 @@ fields:
       sort: 11
       special:
         - o2m
-      translations: null
+      translations:
+        - language: zh-CN
+          translation: 多语言内容
       validation: null
       validation_message: null
       width: full
@@ -3090,7 +3100,7 @@ fields:
       group: null
       hidden: false
       interface: list-o2m
-      note: SKU 媒体关联
+      note: 产品图片
       options:
         enableCreate: true
         enableSelect: true
@@ -3101,7 +3111,9 @@ fields:
       sort: 12
       special:
         - o2m
-      translations: null
+      translations:
+        - language: zh-CN
+          translation: 产品图片
       validation: null
       validation_message: null
       width: full
@@ -3197,9 +3209,9 @@ fields:
       display_options: null
       field: media_id
       group: null
-      hidden: false
+      hidden: true
       interface: null
-      note: 媒体
+      note: 高级：复用媒体库中的已有媒体；普通上传请使用图片字段
       options: null
       readonly: false
       required: false
@@ -3240,9 +3252,16 @@ fields:
       field: kind
       group: null
       hidden: false
-      interface: null
-      note: 关联用途
-      options: null
+      interface: select-dropdown
+      note: 图片用途
+      options:
+        choices:
+          - text: 主图
+            value: product_main
+          - text: 详情图
+            value: product_detail
+          - text: 工程图
+            value: product_diagram
       readonly: false
       required: true
       searchable: true
@@ -3250,7 +3269,7 @@ fields:
       special: null
       translations:
         - language: zh-CN
-          translation: 关联用途
+          translation: 图片用途
       validation: null
       validation_message: null
       width: full
@@ -3283,7 +3302,7 @@ fields:
       group: null
       hidden: false
       interface: null
-      note: 排序
+      note: 显示顺序
       options: null
       readonly: false
       required: false
@@ -3292,10 +3311,10 @@ fields:
       special: null
       translations:
         - language: zh-CN
-          translation: 排序
+          translation: 显示顺序
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: sort
       table: product_media
@@ -3324,8 +3343,8 @@ fields:
       field: is_primary
       group: null
       hidden: false
-      interface: null
-      note: 主图
+      interface: boolean
+      note: 设为主图
       options: null
       readonly: false
       required: false
@@ -3334,10 +3353,10 @@ fields:
       special: null
       translations:
         - language: zh-CN
-          translation: 主图
+          translation: 设为主图
       validation: null
       validation_message: null
-      width: full
+      width: half
     schema:
       name: is_primary
       table: product_media
@@ -3366,8 +3385,8 @@ fields:
       field: file_id
       group: null
       hidden: false
-      interface: file
-      note: 媒体文件
+      interface: product-media-editor
+      note: 图片：支持大图预览、上传、替换和清除
       options: null
       readonly: false
       required: false
@@ -3376,7 +3395,7 @@ fields:
       special: null
       translations:
         - language: zh-CN
-          translation: 媒体文件
+          translation: 图片
       validation: null
       validation_message: null
       width: full
