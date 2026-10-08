@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSiteSettings, getCategoriesByLevel } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
 import { hreflangMap, siteUrl } from "@/lib/site";
+import { socialMetadata } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -14,7 +15,13 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const lang = toLang((await params).lang);
+  const title = "DEGSON";
+  const description =
+    lang === "zh"
+      ? "德昌工业连接解决方案，包括接线端子、连接器和工业组件。"
+      : "DEGSON industrial connection solutions — terminal blocks and connectors.";
   return {
+    ...socialMetadata({ title, description, url: siteUrl(lang, "/") }),
     alternates: {
       canonical: siteUrl(lang, "/"),
       languages: hreflangMap("/"),

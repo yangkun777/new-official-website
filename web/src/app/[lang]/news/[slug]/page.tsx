@@ -7,7 +7,7 @@ import { hreflangMap, siteUrl } from "@/lib/site";
 import LangSwitcher from "@/components/LangSwitcher";
 import ProductImage from "@/components/ProductImage";
 import { sanitizeRichText } from "@/lib/contentSafety";
-import { serializeJsonLd } from "@/lib/seo";
+import { serializeJsonLd, socialMetadata } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -22,9 +22,12 @@ export async function generateMetadata({
   const found = await getNewsBySlug(slug);
   if (!found) return {};
   const path = `/news/${found.news.slug}`;
+  const title = found.news.title;
+  const description = (found.news.summary ?? found.news.title).slice(0, 160);
   return {
-    title: found.news.title,
-    description: (found.news.summary ?? found.news.title).slice(0, 160),
+    title,
+    description,
+    ...socialMetadata({ title, description, url: siteUrl(found.resolvedLang, path) }),
     alternates: {
       canonical: siteUrl(found.resolvedLang, path),
       languages: hreflangMap(path, found.availableLangs),

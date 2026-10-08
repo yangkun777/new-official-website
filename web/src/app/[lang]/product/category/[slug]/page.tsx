@@ -11,7 +11,7 @@ import {
 } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
 import { hreflangMap, siteUrl } from "@/lib/site";
-import { serializeJsonLd } from "@/lib/seo";
+import { serializeJsonLd, socialMetadata } from "@/lib/seo";
 import type { Category, Crumb } from "@/types/product";
 
 export const revalidate = 60;
@@ -30,13 +30,16 @@ export async function generateMetadata({
   if (!found) return {};
   const cat = found.category;
   const path = `/product/category/${cat.slug}`;
+  const title = cat.seo_title ?? cat.name;
+  const description = (
+    cat.seo_description ??
+    cat.description ??
+    `${cat.name} from DEGSON`
+  ).slice(0, 160);
   return {
-    title: cat.seo_title ?? cat.name,
-    description: (
-      cat.seo_description ??
-      cat.description ??
-      `${cat.name} from DEGSON`
-    ).slice(0, 160),
+    title,
+    description,
+    ...socialMetadata({ title, description, url: siteUrl(found.resolvedLang, path) }),
     alternates: {
       canonical: siteUrl(found.resolvedLang, path),
       languages: hreflangMap(path, found.availableLangs),

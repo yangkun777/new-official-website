@@ -11,7 +11,7 @@ import {
 } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
 import { hreflangMap, siteUrl } from "@/lib/site";
-import { serializeJsonLd } from "@/lib/seo";
+import { serializeJsonLd, socialMetadata } from "@/lib/seo";
 import type { Crumb, Series } from "@/types/product";
 
 export const revalidate = 60;
@@ -28,13 +28,16 @@ export async function generateMetadata({
   if (!found) return {};
   const s = found.series;
   const path = `/product/series/${s.matecode}`;
+  const title = s.seo_title ?? `${s.name} Series`;
+  const description = (
+    s.seo_description ??
+    s.description ??
+    `${s.name} series from DEGSON`
+  ).slice(0, 160);
   return {
-    title: s.seo_title ?? `${s.name} Series`,
-    description: (
-      s.seo_description ??
-      s.description ??
-      `${s.name} series from DEGSON`
-    ).slice(0, 160),
+    title,
+    description,
+    ...socialMetadata({ title, description, url: siteUrl(found.resolvedLang, path) }),
     alternates: {
       canonical: siteUrl(found.resolvedLang, path),
       languages: hreflangMap(path, found.availableLangs),

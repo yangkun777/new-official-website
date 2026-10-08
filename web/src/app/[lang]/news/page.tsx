@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getNewsList } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
 import { hreflangMap, siteUrl } from "@/lib/site";
+import { socialMetadata } from "@/lib/seo";
 import NewsCard from "@/components/NewsCard";
 import LangSwitcher from "@/components/LangSwitcher";
 
@@ -16,11 +17,14 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const lang = toLang((await params).lang);
   const isZh = lang === "zh";
+  const title = isZh ? "新闻动态" : "News";
+  const description = isZh
+    ? "德昌最新动态与产品资讯。"
+    : "Latest updates and product news from DEGSON.";
   return {
-    title: isZh ? "新闻动态" : "News",
-    description: isZh
-      ? "德昌最新动态与产品资讯。"
-      : "Latest updates and product news from DEGSON.",
+    title,
+    description,
+    ...socialMetadata({ title, description, url: siteUrl(lang, "/news") }),
     alternates: {
       canonical: siteUrl(lang, "/news"),
       languages: hreflangMap("/news"),
