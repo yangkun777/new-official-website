@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { LANGS, DEFAULT_LANG } from "@/lib/lang";
+import { getSitePolicy } from "@/lib/siteConfig";
 
 /**
  * 语言前缀收敛：
@@ -10,6 +11,22 @@ import { LANGS, DEFAULT_LANG } from "@/lib/lang";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const first = pathname.split("/")[1] ?? "";
+
+  const policy = getSitePolicy();
+  if (policy.mode === "production") {
+    // Production URL contract: English is the canonical root, while Chinese
+    // lives on the separate CN domain. Both prefixed variants are normalized.
+    const rest = pathname === "/" ? "/" : pathname.slice(first.length + 1) || "/";
+    if (first === "zh") {
+      return NextResponse.redirect(policy.siteUrl("zh", rest));
+    }
+    if (first === DEFAULT_LANG) {
+      return NextResponse.redirect(policy.siteUrl("en", rest));
+    }
+    // Root and unprefixed English routes are already canonical in production.
+    return NextResponse.next();
+  }
+
   if ((LANGS as readonly string[]).includes(first)) {
     return NextResponse.next();
   }
