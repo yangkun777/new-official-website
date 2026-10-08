@@ -164,40 +164,31 @@ function toSubCard(node: RawCatNode, lang: Lang): SubCategoryCard | null {
   };
 }
 
-/** 首页/导航用：按层级取分类卡片 */
-export async function getCategoriesByLevel(
-  level: number,
-  lang: Lang
-): Promise<SubCategoryCard[]> {
-  const { items } = await apiGetList<RawCatNode>(
-    "/items/category",
-    {
-      "filter[level][_eq]": String(level),
-      "filter[status][_eq]": "published",
-      sort: "sort",
-      limit: "100",
-      fields: `id,level,sort,status,image,updated_at,${tf("translations")}`,
-      ...dfList("translations", lang),
-    },
-    CONTENT_TAGS.category
-  );
-  return items
-    .map((n) => toSubCard(n, lang))
-    .filter((c): c is SubCategoryCard => c !== null);
+interface CategoryPageQuery {
+  lang: Lang;
+  page: number;
+  limit: number;
+  level?: number;
+  parentId?: number;
 }
 
-/** Sitemap 用分页分类读取：避免单次 limit 截断全量分类 URL。 */
-export async function getCategoriesForSitemap(
-  level: number,
-  lang: Lang,
-  page: number,
-  limit = 500
-): Promise<{ items: SubCategoryCard[]; total: number }> {
+async function getCategoryPage({
+  lang,
+  page,
+  limit,
+  level,
+  parentId,
+}: CategoryPageQuery): Promise<{ items: SubCategoryCard[]; total: number }> {
+  const filters: Record<string, string> = {
+    "filter[status][_eq]": "published",
+  };
+  if (level !== undefined) filters["filter[level][_eq]"] = String(level);
+  if (parentId !== undefined) filters["filter[parent_id][_eq]"] = String(parentId);
+
   const { items, total } = await apiGetList<RawCatNode>(
     "/items/category",
     {
-      "filter[level][_eq]": String(level),
-      "filter[status][_eq]": "published",
+      ...filters,
       sort: "sort",
       limit: String(limit),
       page: String(page),
@@ -212,6 +203,32 @@ export async function getCategoriesForSitemap(
       .filter((c): c is SubCategoryCard => c !== null),
     total,
   };
+}
+
+/** 首页/导航用：按层级分页取全量分类卡片。 */
+export async function getCategoriesByLevel(
+  level: number,
+  lang: Lang
+): Promise<SubCategoryCard[]> {
+  const limit = 500;
+  const first = await getCategoryPage({ level, lang, page: 1, limit });
+  const pages = Math.max(1, Math.ceil(first.total / limit));
+  const all = [...first.items];
+  for (let page = 2; page <= pages; page++) {
+    const result = await getCategoryPage({ level, lang, page, limit });
+    all.push(...result.items);
+  }
+  return all;
+}
+
+/** Sitemap 用分页分类读取：避免单次 limit 截断全量分类 URL。 */
+export async function getCategoriesForSitemap(
+  level: number,
+  lang: Lang,
+  page: number,
+  limit = 500
+): Promise<{ items: SubCategoryCard[]; total: number }> {
+  return getCategoryPage({ level, lang, page, limit });
 }
 
 export interface LocalizedCategory {
@@ -271,21 +288,15 @@ export async function getSubCategories(
   parentId: number,
   lang: Lang
 ): Promise<SubCategoryCard[]> {
-  const { items } = await apiGetList<RawCatNode>(
-    "/items/category",
-    {
-      "filter[parent_id][_eq]": String(parentId),
-      "filter[status][_eq]": "published",
-      sort: "sort",
-      limit: "100",
-      fields: `id,level,sort,image,${tf("translations")}`,
-      ...dfList("translations", lang),
-    },
-    CONTENT_TAGS.category
-  );
-  return items
-    .map((n) => toSubCard(n, lang))
-    .filter((c): c is SubCategoryCard => c !== null);
+  const limit = 500;
+  const first = await getCategoryPage({ parentId, lang, page: 1, limit });
+  const pages = Math.max(1, Math.ceil(first.total / limit));
+  const all = [...first.items];
+  for (let page = 2; page <= pages; page++) {
+    const result = await getCategoryPage({ parentId, lang, page, limit });
+    all.push(...result.items);
+  }
+  return all;
 }
 
 // ---------------------------------------------------------------------------
