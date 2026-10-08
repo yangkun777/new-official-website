@@ -3202,7 +3202,7 @@ fields:
       note: 媒体
       options: null
       readonly: false
-      required: true
+      required: false
       searchable: true
       sort: 3
       special: null
@@ -3220,7 +3220,7 @@ fields:
       max_length: null
       numeric_precision: 10
       numeric_scale: 0
-      is_nullable: false
+      is_nullable: true
       is_unique: false
       is_indexed: true
       is_primary_key: false
@@ -3355,6 +3355,48 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: product_media
+    field: file_id
+    type: string
+    meta:
+      collection: product_media
+      conditions: null
+      display: null
+      display_options: null
+      field: file_id
+      group: null
+      hidden: false
+      interface: file
+      note: 媒体文件
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations:
+        - language: zh-CN
+          translation: 媒体文件
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: file_id
+      table: product_media
+      data_type: varchar
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_files
+      foreign_key_column: id
   - collection: product_translations
     field: id
     type: integer
@@ -5371,6 +5413,27 @@ relations:
       constraint_name: product_media_product_id_foreign
       on_update: NO ACTION
       on_delete: CASCADE
+  - collection: product_media
+    field: file_id
+    related_collection: directus_files
+    meta:
+      junction_field: null
+      many_collection: product_media
+      many_field: file_id
+      one_allowed_collections: null
+      one_collection: directus_files
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: product_media
+      column: file_id
+      foreign_key_table: directus_files
+      foreign_key_column: id
+      constraint_name: product_media_file_id_foreign
+      on_update: NO ACTION
+      on_delete: SET NULL
   - collection: product_media
     field: media_id
     related_collection: media

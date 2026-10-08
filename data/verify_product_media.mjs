@@ -49,6 +49,7 @@ for (const field of ["file_id", "kind", "language", "alt", "caption", "sort", "s
 for (const field of ["product_id", "media_id", "kind", "sort", "is_primary"]) {
   assert.equal((await fields("product_media")).has(field), true, `missing product_media.${field}`);
 }
+assert.equal((await fields("product_media")).has("file_id"), true, "missing product_media.file_id");
 for (const field of ["name", "slug", "h1", "seo_title", "seo_description", "short_description", "description"]) {
   assert.equal((await fields("product_translations")).has(field), true, `missing product_translations.${field}`);
 }
@@ -60,6 +61,7 @@ for (const expected of [
   "media.file_id->directus_files",
   "product_media.product_id->product",
   "product_media.media_id->media",
+  "product_media.file_id->directus_files",
   "product_translations.product_id->product",
 ]) {
   assert.equal(relationKeys.has(expected), true, `missing relation ${expected}`);

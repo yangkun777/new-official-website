@@ -28,6 +28,7 @@ const expectedNotes = {
   "media.caption": "图片说明",
   "media.sort": "排序",
   "media.status": "发布状态",
+  "product_media.file_id": "媒体文件",
   "product_media.product_id": "关联产品",
   "product_media.media_id": "媒体",
   "product_media.kind": "关联用途",
@@ -71,6 +72,7 @@ const expectedTranslations = {
   "media.caption": "图片说明",
   "media.sort": "排序",
   "media.status": "发布状态",
+  "product_media.file_id": "媒体文件",
   "product_media.product_id": "关联产品",
   "product_media.media_id": "媒体",
   "product_media.kind": "关联用途",
@@ -126,6 +128,15 @@ for (const [key, translation] of Object.entries(expectedTranslations)) {
   if (!translations.some((item) => item.language === "zh-CN" && item.translation === translation)) {
     failures.push(`${key}.translation`);
   }
+}
+
+for (const [key, interfaceName] of Object.entries({
+  "media.file_id": "file",
+  "product_media.file_id": "file",
+})) {
+  const [collection, field] = key.split(".");
+  const payload = await get(`/fields/${collection}/${field}`);
+  if (payload.data?.meta?.interface !== interfaceName) failures.push(`${key}.interface`);
 }
 for (const [collection, translation] of Object.entries(expectedCollectionTranslations)) {
   const payload = await get(`/collections/${collection}`);

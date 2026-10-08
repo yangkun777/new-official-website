@@ -212,6 +212,30 @@ async function ensureFieldSchema(collection, field, schema) {
   return false;
 }
 
+/** 补齐已有字段的后台编辑器元数据；字段已存在时，POST 不会更新 meta。 */
+async function ensureFieldMeta(collection, field, meta) {
+  const current = await api('GET', `/fields/${collection}/${field}`);
+  if (current.status < 200 || current.status >= 300) {
+    console.log(`      ✗ ${collection}.${field} 元数据读取失败 ${current.status}`);
+    fail++; failures.push(`meta-read:${collection}.${field}`);
+    return false;
+  }
+  const currentMeta = current.json?.data?.meta ?? {};
+  const needsPatch = Object.entries(meta).some(([key, value]) =>
+    JSON.stringify(currentMeta[key]) !== JSON.stringify(value),
+  );
+  if (!needsPatch) { skip++; return true; }
+  const r = await api('PATCH', `/fields/${collection}/${field}`, { meta });
+  if (r.status >= 200 && r.status < 300) {
+    console.log(`      ↻ ${collection}.${field} 后台编辑器已补齐`);
+    ok++;
+    return true;
+  }
+  console.log(`      ✗ ${collection}.${field} 后台编辑器失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`meta:${collection}.${field}`);
+  return false;
+}
+
 // ---------- 3.1 product media ----------
 console.log('\n### media');
 if (await ensureCollection('media', '统一媒体元数据（文件本体保存在 Directus 文件库）')) {
@@ -230,14 +254,18 @@ if (await ensureCollection('media', '统一媒体元数据（文件本体保存�
 console.log('\n### product_media');
 if (await ensureCollection('product_media', 'SKU 媒体关联（主图/详情图/工程图按用途和顺序管理）')) {
   await ensureField('product_media', 'product_id', 'integer', { is_nullable: false }, { required: true });
-  await ensureField('product_media', 'media_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_media', 'media_id', 'integer', { is_nullable: true }, { required: false });
+  await ensureField('product_media', 'file_id', 'string', { max_length: 36, is_nullable: true }, { interface: 'file', note: '媒体文件' });
   await ensureField('product_media', 'kind', 'string', { max_length: 32, is_nullable: false }, { required: true });
   await ensureField('product_media', 'sort', 'integer', { is_nullable: true, default_value: 0 });
   await ensureField('product_media', 'is_primary', 'boolean', { is_nullable: true, default_value: false });
+  await ensureFieldSchema('product_media', 'media_id', { is_nullable: true });
+  await ensureFieldMeta('product_media', 'file_id', { interface: 'file', note: '媒体文件' });
   await ensureAliasField('product', 'media_links', 'SKU 媒体关联');
   await ensureAliasField('media', 'product_links', '被 SKU 引用的媒体');
   await ensureRelation('product_media', 'product_id', 'product', 'media_links', 'CASCADE');
   await ensureRelation('product_media', 'media_id', 'media', 'product_links', 'CASCADE');
+  await ensureRelation('product_media', 'file_id', 'directus_files', null, 'SET NULL');
 }
 
 // ---------- 4. news ----------

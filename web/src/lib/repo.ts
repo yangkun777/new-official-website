@@ -485,6 +485,7 @@ interface RawProductMedia {
   kind: string;
   sort?: number | null;
   is_primary?: boolean | null;
+  file_id?: string | null;
   media_id?: {
     id: number;
     kind: string;
@@ -529,6 +530,7 @@ export async function getProductByOrderNo(
         "id,order_no,title,poles,pitch,combined_title,status",
         tf("translations"),
         "media_links.id,media_links.kind,media_links.sort,media_links.is_primary",
+        "media_links.file_id",
         "media_links.media_id.id,media_links.media_id.kind,media_links.media_id.file_id",
         "media_links.media_id.language,media_links.media_id.alt,media_links.media_id.caption",
         "media_links.media_id.sort,media_links.media_id.status",
@@ -550,7 +552,7 @@ export async function getProductByOrderNo(
       kind: link.kind,
       sort: link.sort ?? link.media_id?.sort ?? 0,
       is_primary: Boolean(link.is_primary),
-      url: resolveMediaUrl(link.media_id?.file_id),
+      url: resolveMediaUrl(link.file_id) ?? resolveMediaUrl(link.media_id?.file_id),
       alt: link.media_id?.alt ?? null,
       caption: link.media_id?.caption ?? null,
     }))
