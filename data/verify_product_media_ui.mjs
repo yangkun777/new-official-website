@@ -6,10 +6,9 @@ const source = fs.readFileSync(
 	'utf8',
 );
 
-assert.match(source, /externalFileName\(value\)/, 'external URL should use a display-name helper');
-assert.match(source, /new URL\(value\)\.pathname/, 'external URL display should parse the pathname');
-assert.match(source, /decodeURIComponent\(pathname\.split\('\/'\)\.pop\(\) \|\| ''\)/, 'external filename should be decoded');
+assert.match(source, /fileName\.value = value;/, 'external URL should remain visible as metadata');
 assert.match(source, /fileInfo\.value = '历史图片地址'/, 'legacy external images should be labeled clearly');
-assert.doesNotMatch(source, /if \(\/\^https\?:.*?\) \{\s*fileName\.value = value;/s, 'raw external URL must not be displayed as the filename');
+assert.match(source, /grid-template-columns: 280px minmax\(0, 1fr\) auto/, 'metadata column must not overlap the preview image');
+assert.match(source, /overflow-wrap: anywhere/, 'long URLs must wrap inside the metadata column');
 
 console.log('PASS product media UI display contract');

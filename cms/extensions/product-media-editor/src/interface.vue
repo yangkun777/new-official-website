@@ -63,7 +63,7 @@ export default {
 			fileInfo.value = '';
 			if (!value) return;
 			if (/^https?:\/\//i.test(value)) {
-				fileName.value = externalFileName(value);
+				fileName.value = value;
 				fileInfo.value = '历史图片地址';
 				return;
 			}
@@ -101,16 +101,6 @@ export default {
 			emit('input', null);
 		}
 
-		function externalFileName(value) {
-			try {
-				const pathname = new URL(value).pathname;
-				const name = decodeURIComponent(pathname.split('/').pop() || '').trim();
-				return name || '历史图片';
-			} catch {
-				return '历史图片';
-			}
-		}
-
 		function formatSize(value) {
 			if (value < 1024) return `${value} B`;
 			if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
@@ -122,12 +112,12 @@ export default {
 
 <style scoped>
 .media-editor { display: grid; gap: 12px; }
-.preview-card { display: grid; grid-template-columns: 160px 1fr auto; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--theme--border-color); border-radius: 8px; background: var(--theme--background-subdued); }
+.preview-card { display: grid; grid-template-columns: 280px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--theme--border-color); border-radius: 8px; background: var(--theme--background-subdued); }
 .preview-stage { width: 280px; height: 190px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: white; }
 .preview-stage img { width: 100%; height: 100%; object-fit: contain; }
 .preview-loading { color: var(--theme--foreground-subdued); font-size: 12px; }
 .file-meta { min-width: 0; display: grid; gap: 4px; }
-.file-meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-meta strong { overflow-wrap: anywhere; word-break: break-word; }
 .file-meta span { color: var(--theme--foreground-subdued); font-size: 12px; }
 .empty-state { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px dashed var(--theme--border-color); border-radius: 8px; color: var(--theme--foreground-subdued); }
 .empty-state strong, .empty-state span { display: block; }
