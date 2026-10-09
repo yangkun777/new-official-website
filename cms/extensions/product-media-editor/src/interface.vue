@@ -63,7 +63,8 @@ export default {
 			fileInfo.value = '';
 			if (!value) return;
 			if (/^https?:\/\//i.test(value)) {
-				fileName.value = value;
+				fileName.value = externalFileName(value);
+				fileInfo.value = '历史图片地址';
 				return;
 			}
 			try {
@@ -98,6 +99,16 @@ export default {
 		function clearFile() {
 			errorMessage.value = '';
 			emit('input', null);
+		}
+
+		function externalFileName(value) {
+			try {
+				const pathname = new URL(value).pathname;
+				const name = decodeURIComponent(pathname.split('/').pop() || '').trim();
+				return name || '历史图片';
+			} catch {
+				return '历史图片';
+			}
 		}
 
 		function formatSize(value) {

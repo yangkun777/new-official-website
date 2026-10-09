@@ -3,7 +3,7 @@ import { useApi } from '@directus/extensions-sdk';
 
 var e=[],t=[];function n(n,r){if(n&&"undefined"!=typeof document){var a,s=true===r.prepend?"prepend":"append",d=true===r.singleTag,i="string"==typeof r.container?document.querySelector(r.container):document.getElementsByTagName("head")[0];if(d){var u=e.indexOf(i);-1===u&&(u=e.push(i)-1,t[u]={}),a=t[u]&&t[u][s]?t[u][s]:t[u][s]=c();}else a=c();65279===n.charCodeAt(0)&&(n=n.substring(1)),a.styleSheet?a.styleSheet.cssText+=n:a.appendChild(document.createTextNode(n));}function c(){var e=document.createElement("style");if(e.setAttribute("type","text/css"),r.attributes)for(var t=Object.keys(r.attributes),n=0;n<t.length;n++)e.setAttribute(t[n],r.attributes[t[n]]);var a="prepend"===s?"afterbegin":"beforeend";return i.insertAdjacentElement(a,e),e}}
 
-var css = "\n.media-editor[data-v-28ea04b9] { display: grid; gap: 12px;\n}\n.preview-card[data-v-28ea04b9] { display: grid; grid-template-columns: 160px 1fr auto; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--theme--border-color); border-radius: 8px; background: var(--theme--background-subdued);\n}\n.preview-stage[data-v-28ea04b9] { width: 280px; height: 190px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: white;\n}\n.preview-stage img[data-v-28ea04b9] { width: 100%; height: 100%; object-fit: contain;\n}\n.preview-loading[data-v-28ea04b9] { color: var(--theme--foreground-subdued); font-size: 12px;\n}\n.file-meta[data-v-28ea04b9] { min-width: 0; display: grid; gap: 4px;\n}\n.file-meta strong[data-v-28ea04b9] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n}\n.file-meta span[data-v-28ea04b9] { color: var(--theme--foreground-subdued); font-size: 12px;\n}\n.empty-state[data-v-28ea04b9] { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px dashed var(--theme--border-color); border-radius: 8px; color: var(--theme--foreground-subdued);\n}\n.empty-state strong[data-v-28ea04b9], .empty-state span[data-v-28ea04b9] { display: block;\n}\n.empty-state span[data-v-28ea04b9] { margin-top: 4px; font-size: 12px;\n}\n.empty-icon[data-v-28ea04b9] { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 8px; background: var(--theme--primary); color: white; font-size: 11px;\n}\n.upload-button[data-v-28ea04b9] { justify-self: start; position: relative; overflow: hidden; display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 6px; background: var(--theme--primary); color: white; cursor: pointer; font-weight: 600;\n}\n.upload-button.disabled[data-v-28ea04b9] { opacity: .5; cursor: not-allowed;\n}\n.upload-button input[data-v-28ea04b9] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;\n}\n.text-button[data-v-28ea04b9] { border: 0; background: transparent; color: var(--theme--danger); cursor: pointer; white-space: nowrap;\n}\n.text-button[data-v-28ea04b9]:disabled { opacity: .5; cursor: not-allowed;\n}\n.error-message[data-v-28ea04b9] { margin: 0; color: var(--theme--danger); font-size: 12px;\n}\n@media (max-width: 700px) {\n.preview-card[data-v-28ea04b9] { grid-template-columns: 1fr;\n}\n.preview-stage[data-v-28ea04b9] { width: 100%; height: 180px;\n}\n}\n";
+var css = "\n.media-editor[data-v-fdc9a366] { display: grid; gap: 12px;\n}\n.preview-card[data-v-fdc9a366] { display: grid; grid-template-columns: 160px 1fr auto; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--theme--border-color); border-radius: 8px; background: var(--theme--background-subdued);\n}\n.preview-stage[data-v-fdc9a366] { width: 280px; height: 190px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: white;\n}\n.preview-stage img[data-v-fdc9a366] { width: 100%; height: 100%; object-fit: contain;\n}\n.preview-loading[data-v-fdc9a366] { color: var(--theme--foreground-subdued); font-size: 12px;\n}\n.file-meta[data-v-fdc9a366] { min-width: 0; display: grid; gap: 4px;\n}\n.file-meta strong[data-v-fdc9a366] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n}\n.file-meta span[data-v-fdc9a366] { color: var(--theme--foreground-subdued); font-size: 12px;\n}\n.empty-state[data-v-fdc9a366] { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px dashed var(--theme--border-color); border-radius: 8px; color: var(--theme--foreground-subdued);\n}\n.empty-state strong[data-v-fdc9a366], .empty-state span[data-v-fdc9a366] { display: block;\n}\n.empty-state span[data-v-fdc9a366] { margin-top: 4px; font-size: 12px;\n}\n.empty-icon[data-v-fdc9a366] { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 8px; background: var(--theme--primary); color: white; font-size: 11px;\n}\n.upload-button[data-v-fdc9a366] { justify-self: start; position: relative; overflow: hidden; display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 6px; background: var(--theme--primary); color: white; cursor: pointer; font-weight: 600;\n}\n.upload-button.disabled[data-v-fdc9a366] { opacity: .5; cursor: not-allowed;\n}\n.upload-button input[data-v-fdc9a366] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;\n}\n.text-button[data-v-fdc9a366] { border: 0; background: transparent; color: var(--theme--danger); cursor: pointer; white-space: nowrap;\n}\n.text-button[data-v-fdc9a366]:disabled { opacity: .5; cursor: not-allowed;\n}\n.error-message[data-v-fdc9a366] { margin: 0; color: var(--theme--danger); font-size: 12px;\n}\n@media (max-width: 700px) {\n.preview-card[data-v-fdc9a366] { grid-template-columns: 1fr;\n}\n.preview-stage[data-v-fdc9a366] { width: 100%; height: 180px;\n}\n}\n";
 n(css,{});
 
 var _export_sfc = (sfc, props) => {
@@ -47,7 +47,8 @@ const _sfc_main = {
 			fileInfo.value = '';
 			if (!value) return;
 			if (/^https?:\/\//i.test(value)) {
-				fileName.value = value;
+				fileName.value = externalFileName(value);
+				fileInfo.value = '历史图片地址';
 				return;
 			}
 			try {
@@ -82,6 +83,16 @@ const _sfc_main = {
 		function clearFile() {
 			errorMessage.value = '';
 			emit('input', null);
+		}
+
+		function externalFileName(value) {
+			try {
+				const pathname = new URL(value).pathname;
+				const name = decodeURIComponent(pathname.split('/').pop() || '').trim();
+				return name || '历史图片';
+			} catch {
+				return '历史图片';
+			}
 		}
 
 		function formatSize(value) {
@@ -165,7 +176,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       : createCommentVNode("v-if", true)
   ]))
 }
-var InterfaceComponent = /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render],['__scopeId',"data-v-28ea04b9"]]);
+var InterfaceComponent = /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render],['__scopeId',"data-v-fdc9a366"]]);
 
 var index = {
 	id: 'product-media-editor',
