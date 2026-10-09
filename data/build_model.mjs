@@ -142,6 +142,11 @@ if (await ensureCollection('category', '产品分类（一级/二级/三级；�
   await ensureField('category', 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
   await ensureField('category', 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
   await ensureRelation('category', 'parent_id', 'category', null, 'SET NULL');
+  await ensureFieldMeta('category', 'image', {
+    interface: 'product-media-editor',
+    note: '分类图片：支持大图预览、上传、替换和清除；兼容历史图片地址',
+    width: 'full',
+  });
 }
 
 // ---------- 2. series ----------

@@ -446,15 +446,17 @@ fields:
       field: image
       group: null
       hidden: false
-      interface: null
-      note: null
+      interface: product-media-editor
+      note: 分类图片：支持大图预览、上传、替换和清除；兼容历史图片地址
       options: null
       readonly: false
       required: false
       searchable: true
       sort: 4
       special: null
-      translations: null
+      translations:
+        - language: zh-CN
+          translation: 分类图片
       validation: null
       validation_message: null
       width: full

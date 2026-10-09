@@ -14,6 +14,7 @@ async function get(path) {
 const expectedNotes = {
   "category.level": "层级：1 一级、2 二级、3 三级",
   "category.parent_id": "上级分类；一级分类留空",
+  "category.image": "分类图片：支持大图预览、上传、替换和清除；兼容历史图片地址",
   "category.sort": "数字越小越靠前",
   "category.status": "仅发布状态会出现在官网",
   "series.matecode": "系列码，发布后不要修改",
@@ -65,6 +66,7 @@ const hiddenFields = [
 const expectedTranslations = {
   "category.level": "层级",
   "category.parent_id": "上级分类",
+  "category.image": "分类图片",
   "category.status": "发布状态",
   "series.matecode": "系列码",
   "series.category_id": "所属分类",
@@ -144,6 +146,7 @@ for (const [key, translation] of Object.entries(expectedTranslations)) {
 
 for (const [key, interfaceName] of Object.entries({
   "media.file_id": "file",
+  "category.image": "product-media-editor",
   "product_media.file_id": "product-media-editor",
 })) {
   const [collection, field] = key.split(".");

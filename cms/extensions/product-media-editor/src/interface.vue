@@ -48,7 +48,11 @@ export default {
 		const fileInfo = ref('');
 		const uploading = ref(false);
 		const errorMessage = ref('');
-		const previewUrl = computed(() => props.value ? `/assets/${encodeURIComponent(props.value)}?width=960&fit=inside&quality=85` : '');
+		const previewUrl = computed(() => {
+			if (!props.value) return '';
+			if (/^https?:\/\//i.test(props.value)) return props.value;
+			return `/assets/${encodeURIComponent(props.value)}?width=960&fit=inside&quality=85`;
+		});
 
 		watch(() => props.value, loadFile, { immediate: true });
 
@@ -58,6 +62,10 @@ export default {
 			fileName.value = '';
 			fileInfo.value = '';
 			if (!value) return;
+			if (/^https?:\/\//i.test(value)) {
+				fileName.value = value;
+				return;
+			}
 			try {
 				const response = await api.get(`/files/${encodeURIComponent(value)}`);
 				const file = response.data?.data;
