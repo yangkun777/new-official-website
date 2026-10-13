@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DEGSON 官网基座 Demo 前台
 
-## Getting Started
+这是当前基座 Demo 的 Next.js 前台。页面只通过 Directus REST API 读取数据，不直连 MySQL。
 
-First, run the development server:
+## 本地启动
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+启动顺序：MySQL 3307 → Directus 8055 → Next.js 3000。
+
+### 1. 配置环境变量
+
+```powershell
+Copy-Item .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+按本机环境填写 `DIRECTUS_TOKEN`。`.env.local` 只保存在本地，不能提交到 Git。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+默认 Demo URL 规则：
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```text
+http://localhost:3000/en/
+http://localhost:3000/zh/
+```
 
-## Learn More
+生产环境 URL 规则：
 
-To learn more about Next.js, take a look at the following resources:
+```text
+SITE_MODE=production
+SITE_ORIGIN=https://www.degson.com
+CN_SITE_ORIGIN=https://www.degson.com.cn
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+生产英文站使用主域根路径（`/`），中文站使用 `CN_SITE_ORIGIN` 根路径；应用内部仍通过
+`/[lang]` 路由渲染。不要把生产环境的 `/en`、`/zh` 前缀 URL 当作 canonical 地址。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. 启动前台
 
-## Deploy on Vercel
+```powershell
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+生产构建检查：
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```powershell
+corepack pnpm exec tsc --noEmit
+corepack pnpm exec next build
+```
+
+## 基座验证
+
+在仓库根目录执行：
+
+```powershell
+node data/verify_base.mjs
+node data/verify_m1_web.mjs
+# 生产 URL / 双域名路由（需先启动 production server）
+node data/verify_production_routes.mjs
+```
+
+数据库约束和数据自检：
+
+```powershell
+# 先在本地 Demo 数据库执行幂等约束
+Get-Content .\data\04_constraints.sql -Raw | mysql --host=127.0.0.1 --port=3307 --user=root --password degson_pilot
+
+# 再执行模型与数据自检
+Get-Content .\data\99_verify.sql -Raw | mysql --host=127.0.0.1 --port=3307 --user=root --password degson_pilot
+```
+
+## 当前边界
+
+当前 Demo 已覆盖首页、分类、系列、新闻列表和新闻详情的中英链路，以及 URL、SEO、富文本安全、媒体来源和缓存 tag 基座。
+
+以下内容不属于当前 Demo：产品详情、产品参数、搜索、下载权限、会员、询盘、全量迁移、生产部署和 CI/CD。
+
+生产 URL 规则以仓库根目录的 `docs/新官网基座优化版PRD_2026-10-08.md` 为准；本地 `/en`、`/zh` 只是开发兼容路径。

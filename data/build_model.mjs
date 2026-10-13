@@ -15,7 +15,10 @@ import { dirname, join } from 'node:path';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
 const BASE = process.env.DIRECTUS_URL || 'http://localhost:8055';
-const TOKEN = readFileSync(join(ROOT, '.admin_token'), 'utf8').trim();
+const TOKEN = readFileSync(
+  process.env.DIRECTUS_ADMIN_TOKEN_FILE ?? join(ROOT, '.admin_token'),
+  'utf8',
+).trim();
 
 let ok = 0, skip = 0, fail = 0;
 const failures = [];
@@ -48,6 +51,62 @@ async function ensureCollection(name, note) {
   return false;
 }
 
+/** 建仅用于后台导航的 collection group（无数据库表）。 */
+async function ensureCollectionGroup(name, translation, sort) {
+  const all = await api('GET', '/collections');
+  const exists = (all.json?.data || []).some((c) => c.collection === name);
+  if (!exists) {
+    const r = await api('POST', '/collections', {
+      collection: name,
+      meta: {
+        icon: 'folder',
+        hidden: false,
+        sort,
+        translations: [{ language: 'zh-CN', translation }],
+      },
+      schema: null,
+    });
+    if (r.status < 200 || r.status >= 300) {
+      console.log(`  ✗ 导航分组 ${name} 失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 260)}`);
+      fail++; failures.push(`collection-group:${name}`);
+      return false;
+    }
+    console.log(`  + 导航分组 ${name}`);
+    ok++;
+  }
+  return ensureCollectionMeta(name, {
+    group: null,
+    hidden: false,
+    sort,
+    icon: 'folder',
+    translations: [{ language: 'zh-CN', translation }],
+  });
+}
+
+/** 补齐集合的后台导航元数据。 */
+async function ensureCollectionMeta(collection, meta) {
+  const current = await api('GET', `/collections/${collection}`);
+  if (current.status < 200 || current.status >= 300) {
+    console.log(`  ✗ 集合 ${collection} 元数据读取失败 ${current.status}`);
+    fail++; failures.push(`collection-meta-read:${collection}`);
+    return false;
+  }
+  const currentMeta = current.json?.data?.meta ?? {};
+  const needsPatch = Object.entries(meta).some(([key, value]) =>
+    JSON.stringify(currentMeta[key]) !== JSON.stringify(value),
+  );
+  if (!needsPatch) { skip++; return true; }
+  const r = await api('PATCH', `/collections/${collection}`, { meta });
+  if (r.status >= 200 && r.status < 300) {
+    console.log(`  ↻ 集合 ${collection} 导航元数据已补齐`);
+    ok++;
+    return true;
+  }
+  console.log(`  ✗ 集合 ${collection} 导航元数据失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`collection-meta:${collection}`);
+  return false;
+}
+
 /** 建字段 */
 async function ensureField(collection, field, type, schema = {}, meta = {}) {
   const r = await api('POST', `/fields/${collection}`, {
@@ -72,15 +131,29 @@ async function ensureRelation(collection, field, related, oneField = null, onDel
   });
   if (r.status >= 200 && r.status < 300) { console.log(`      ↔ 关系 ${collection}.${field} → ${related}${oneField ? `  (O2M 别名: ${oneField})` : ''}`); ok++; return true; }
   if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) {
-    // 已存在：确保 one_field 别名已设置（幂等补齐）
-    if (oneField) {
-      const p = await api('PATCH', `/relations/${collection}/${field}`, {
-        meta: { many_collection: collection, many_field: field, one_collection: related, one_field: oneField, one_deselect_action: 'nullify' },
-      });
-      if (p.status >= 200 && p.status < 300) { console.log(`      ↔ 补齐 O2M 别名 ${related}.${oneField}`); ok++; }
-      else { console.log(`      ✗ 补齐 O2M 别名失败 ${p.status}: ${JSON.stringify(p.json).slice(0, 180)}`); fail++; failures.push(`o2m:${related}.${oneField}`); }
+    if (!oneField) {
+      console.log(`      = 关系已存在 ${collection}.${field} → ${related}`);
+      skip++;
+      return true;
     }
-    skip++; return true;
+    const existing = await api('GET', '/relations');
+    const match = (existing.json?.data || []).find(
+      (item) => item.collection === collection && item.field === field && item.related_collection === related,
+    );
+    if (match?.meta?.one_field === oneField) {
+      console.log(`      = 关系已存在且包含 O2M 别名 ${related}.${oneField}`);
+      skip++;
+      return true;
+    }
+    // Directus 11.17.4 的 PATCH /relations 路径可能导致服务崩溃。
+    // 已存在关系只报告状态；别名不一致必须通过 snapshot/受控重建修复。
+    if (oneField && JSON.stringify(r.json).includes(oneField)) {
+      console.log(`      = 关系已存在且包含 O2M 别名 ${related}.${oneField}`);
+      skip++; return true;
+    }
+    console.log(`      ✗ 关系已存在但无法确认 O2M 别名；请导出 snapshot 后人工修复 ${related}.${oneField}`);
+    fail++; failures.push(`o2m:${related}.${oneField}`);
+    return false;
   }
   console.log(`      ✗ 关系 ${collection}.${field} 失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 200)}`);
   fail++; failures.push(`rel:${collection}.${field}`);
@@ -90,6 +163,7 @@ async function ensureRelation(collection, field, related, oneField = null, onDel
 const TS_CREATED = { interface: 'datetime', readonly: true, special: ['date-created'], width: 'half' };
 const TS_UPDATED = { interface: 'datetime', readonly: true, special: ['date-updated'], width: 'half' };
 const RICH = { interface: 'input-rich-text-html' };
+const FILE = { interface: 'file' };
 
 /** 翻译表统一字段模板（★ 四个翻译集合完全一致，运营心智只有一套） */
 async function buildTranslation(collection, parentCollection, parentField, note) {
@@ -113,6 +187,32 @@ async function buildTranslation(collection, parentCollection, parentField, note)
 console.log('=== DEGSON 底座建模（Directus 11）===');
 console.log('BASE =', BASE);
 
+const MENU_GROUPS = {
+  product_management: { translation: '产品管理', sort: 1 },
+  content_management: { translation: '内容管理', sort: 2 },
+  site_configuration: { translation: '站点配置', sort: 3 },
+};
+
+const COLLECTION_MENU_META = {
+  category: { group: 'product_management', hidden: false, sort: 1, translations: [{ language: 'zh-CN', translation: '产品分类' }] },
+  series: { group: 'product_management', hidden: false, sort: 2, translations: [{ language: 'zh-CN', translation: '产品系列' }] },
+  product: { group: 'product_management', hidden: false, sort: 3, translations: [{ language: 'zh-CN', translation: '产品' }] },
+  media: { group: 'product_management', hidden: false, sort: 4, translations: [{ language: 'zh-CN', translation: '媒体' }] },
+  product_media: { group: 'product_management', hidden: true, sort: 5, translations: [{ language: 'zh-CN', translation: '产品媒体关联' }] },
+  category_translations: { group: 'product_management', hidden: true, sort: 6, translations: [{ language: 'zh-CN', translation: '分类翻译' }] },
+  series_translations: { group: 'product_management', hidden: true, sort: 7, translations: [{ language: 'zh-CN', translation: '系列翻译' }] },
+  product_translations: { group: 'product_management', hidden: true, sort: 8, translations: [{ language: 'zh-CN', translation: '产品翻译' }] },
+  news: { group: 'content_management', hidden: false, sort: 1, translations: [{ language: 'zh-CN', translation: '新闻' }] },
+  news_translations: { group: 'content_management', hidden: true, sort: 2, translations: [{ language: 'zh-CN', translation: '新闻翻译' }] },
+  site_settings: { group: 'site_configuration', hidden: false, sort: 1 },
+  languages: { group: 'site_configuration', hidden: false, sort: 2 },
+};
+
+console.log('\n### 后台导航分组');
+for (const [collection, { translation, sort }] of Object.entries(MENU_GROUPS)) {
+  await ensureCollectionGroup(collection, translation, sort);
+}
+
 // ---------- 1. category ----------
 console.log('\n### category');
 if (await ensureCollection('category', '产品分类（一级/二级/三级；名称等可翻译字段在 category_translations）')) {
@@ -124,12 +224,18 @@ if (await ensureCollection('category', '产品分类（一级/二级/三级；�
   await ensureField('category', 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
   await ensureField('category', 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
   await ensureRelation('category', 'parent_id', 'category', null, 'SET NULL');
+  await ensureFieldMeta('category', 'image', {
+    interface: 'product-media-editor',
+    note: '分类图片：支持大图预览、上传、替换和清除；兼容历史图片地址',
+    width: 'full',
+  });
 }
 
 // ---------- 2. series ----------
 console.log('\n### series');
 if (await ensureCollection('series', '产品系列（matecode = 系列码，语言无关）')) {
-  await ensureField('series', 'matecode', 'string', { max_length: 32, is_nullable: false }, { required: true });
+  await ensureField('series', 'matecode', 'string', { max_length: 32, is_nullable: false, is_unique: true, is_indexed: true }, { required: true });
+  await ensureFieldSchema('series', 'matecode', { is_unique: true, is_indexed: true });
   await ensureField('series', 'category_id', 'integer', { is_nullable: true });
   await ensureField('series', 'image', 'string', { max_length: 512, is_nullable: true });
   await ensureField('series', 'sort', 'integer', { is_nullable: true, default_value: 0 });
@@ -143,7 +249,8 @@ if (await ensureCollection('series', '产品系列（matecode = 系列码，语�
 console.log('\n### product');
 if (await ensureCollection('product', '产品变体（order_no = 订货号，全库唯一；语言无关字段）')) {
   await ensureField('product', 'title', 'string', { max_length: 255, is_nullable: true }, { note: '型号，语言无关（如 15EDGK-3.5）' });
-  await ensureField('product', 'order_no', 'string', { max_length: 64, is_nullable: false }, { required: true });
+  await ensureField('product', 'order_no', 'string', { max_length: 64, is_nullable: false, is_unique: true, is_indexed: true }, { required: true });
+  await ensureFieldSchema('product', 'order_no', { is_unique: true, is_indexed: true });
   await ensureField('product', 'series_id', 'integer', { is_nullable: true });
   await ensureField('product', 'poles', 'string', { max_length: 16, is_nullable: true });
   await ensureField('product', 'pitch', 'string', { max_length: 16, is_nullable: true });
@@ -152,6 +259,126 @@ if (await ensureCollection('product', '产品变体（order_no = 订货号，全
   await ensureField('product', 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
   await ensureField('product', 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
   await ensureRelation('product', 'series_id', 'series', null, 'CASCADE');
+  await ensureFieldMeta('product', 'title', { translations: [{ language: 'zh-CN', translation: '型号' }] });
+  await ensureFieldMeta('product', 'poles', { translations: [{ language: 'zh-CN', translation: '极数' }] });
+  await ensureFieldMeta('product', 'pitch', { translations: [{ language: 'zh-CN', translation: '节距' }] });
+  await ensureFieldMeta('product', 'combined_title', { translations: [{ language: 'zh-CN', translation: '组合标题' }] });
+  await ensureFieldMeta('product', 'translations', { translations: [{ language: 'zh-CN', translation: '多语言内容' }] });
+}
+
+/** 建反向 O2M 别名字段；Directus 不会自动从 relation meta 创建它。 */
+async function ensureAliasField(collection, field, note) {
+  const r = await api('POST', `/fields/${collection}`, {
+    field,
+    type: 'alias',
+    meta: {
+      special: ['o2m'],
+      interface: 'list-o2m',
+      options: { template: '{{kind}}', enableCreate: true, enableSelect: true },
+      display: 'related-values',
+      display_options: { template: '{{kind}} — {{sort}}' },
+      note,
+    },
+  });
+  if (r.status >= 200 && r.status < 300) { console.log(`      + ${field} (O2M alias)`); ok++; return true; }
+  if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) { skip++; return true; }
+  console.log(`      ✗ ${collection}.${field} 别名失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`alias:${collection}.${field}`);
+  return false;
+}
+
+/** 补齐已有字段的约束元数据；历史建模可能已创建字段但没有索引。 */
+async function ensureFieldSchema(collection, field, schema) {
+  const current = await api('GET', `/fields/${collection}/${field}`);
+  const currentSchema = current.json?.data?.schema ?? {};
+  const needsPatch = Object.entries(schema).some(([key, value]) => currentSchema[key] !== value);
+  if (!needsPatch) { skip++; return true; }
+  const r = await api('PATCH', `/fields/${collection}/${field}`, { schema });
+  if (r.status >= 200 && r.status < 300) {
+    console.log(`      ↻ ${collection}.${field} 约束已补齐`);
+    ok++;
+    return true;
+  }
+  console.log(`      ✗ ${collection}.${field} 约束失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`schema:${collection}.${field}`);
+  return false;
+}
+
+/** 补齐已有字段的后台编辑器元数据；字段已存在时，POST 不会更新 meta。 */
+async function ensureFieldMeta(collection, field, meta) {
+  const current = await api('GET', `/fields/${collection}/${field}`);
+  if (current.status < 200 || current.status >= 300) {
+    console.log(`      ✗ ${collection}.${field} 元数据读取失败 ${current.status}`);
+    fail++; failures.push(`meta-read:${collection}.${field}`);
+    return false;
+  }
+  const currentMeta = current.json?.data?.meta ?? {};
+  const needsPatch = Object.entries(meta).some(([key, value]) =>
+    JSON.stringify(currentMeta[key]) !== JSON.stringify(value),
+  );
+  if (!needsPatch) { skip++; return true; }
+  const r = await api('PATCH', `/fields/${collection}/${field}`, { meta });
+  if (r.status >= 200 && r.status < 300) {
+    console.log(`      ↻ ${collection}.${field} 后台编辑器已补齐`);
+    ok++;
+    return true;
+  }
+  console.log(`      ✗ ${collection}.${field} 后台编辑器失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`meta:${collection}.${field}`);
+  return false;
+}
+
+// ---------- 3.1 product media ----------
+console.log('\n### media');
+if (await ensureCollection('media', '统一媒体元数据（文件本体保存在 Directus 文件库）')) {
+  await ensureField('media', 'file_id', 'string', { max_length: 36, is_nullable: true }, { ...FILE });
+  await ensureField('media', 'kind', 'string', { max_length: 32, is_nullable: false }, { required: true, note: 'product_main/product_detail 等用途' });
+  await ensureField('media', 'language', 'string', { max_length: 8, is_nullable: true }, { note: '为空表示语言无关' });
+  await ensureField('media', 'alt', 'string', { max_length: 255, is_nullable: true });
+  await ensureField('media', 'caption', 'text', { is_nullable: true });
+  await ensureField('media', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('media', 'status', 'string', { max_length: 16, is_nullable: true, default_value: 'published' });
+  await ensureField('media', 'created_at', 'timestamp', { is_nullable: true }, TS_CREATED);
+  await ensureField('media', 'updated_at', 'timestamp', { is_nullable: true }, TS_UPDATED);
+  await ensureRelation('media', 'file_id', 'directus_files', null, 'SET NULL');
+}
+
+console.log('\n### product_media');
+if (await ensureCollection('product_media', 'SKU 媒体关联（主图/详情图/工程图按用途和顺序管理）')) {
+  await ensureField('product_media', 'product_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_media', 'media_id', 'integer', { is_nullable: true }, { required: false });
+  await ensureField('product_media', 'file_id', 'string', { max_length: 36, is_nullable: true }, { interface: 'file', note: '媒体文件' });
+  await ensureField('product_media', 'kind', 'string', { max_length: 32, is_nullable: false }, { required: true });
+  await ensureField('product_media', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('product_media', 'is_primary', 'boolean', { is_nullable: true, default_value: false });
+  await ensureFieldSchema('product_media', 'media_id', { is_nullable: true });
+  await ensureFieldMeta('product_media', 'file_id', {
+    interface: 'product-media-editor',
+    note: '图片：支持大图预览、上传、替换和清除',
+    width: 'full',
+  });
+  await ensureFieldMeta('product_media', 'media_id', {
+    hidden: true,
+    note: '高级：复用媒体库中的已有媒体；普通上传请使用图片字段',
+  });
+  await ensureFieldMeta('product_media', 'kind', {
+    interface: 'select-dropdown',
+    options: {
+      choices: [
+        { text: '主图', value: 'product_main' },
+        { text: '详情图', value: 'product_detail' },
+        { text: '工程图', value: 'product_diagram' },
+      ],
+    },
+  });
+  await ensureFieldMeta('product_media', 'sort', { width: 'half' });
+  await ensureFieldMeta('product_media', 'is_primary', { interface: 'boolean', width: 'half' });
+  await ensureAliasField('product', 'media_links', 'SKU 媒体关联');
+  await ensureFieldMeta('product', 'media_links', { translations: [{ language: 'zh-CN', translation: '产品图片' }] });
+  await ensureAliasField('media', 'product_links', '被 SKU 引用的媒体');
+  await ensureRelation('product_media', 'product_id', 'product', 'media_links', 'CASCADE');
+  await ensureRelation('product_media', 'media_id', 'media', 'product_links', 'CASCADE');
+  await ensureRelation('product_media', 'file_id', 'directus_files', null, 'SET NULL');
 }
 
 // ---------- 4. news ----------
@@ -204,7 +431,13 @@ for (const [code, name, sort] of [['en', 'English', 1], ['zh', '简体中文', 2
   else { console.log(`  ✗ 语言 ${code} 失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 160)}`); fail++; failures.push(`lang:${code}`); }
 }
 
+console.log('\n### 后台集合菜单');
+for (const [collection, meta] of Object.entries(COLLECTION_MENU_META)) {
+  await ensureCollectionMeta(collection, meta);
+}
+
 console.log('\n============================================');
 console.log(`结果：新增 ${ok} / 跳过 ${skip} / 失败 ${fail}`);
 if (failures.length) { console.log('失败项：'); failures.forEach((f) => console.log('  - ' + f)); }
 console.log('============================================');
+if (fail > 0) process.exitCode = 1;

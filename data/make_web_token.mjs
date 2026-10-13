@@ -66,6 +66,8 @@ const business = [
   "site_settings",
   "languages",
   "directus_files",
+  "media",
+  "product_media",
 ];
 const perms = await req("GET", `/permissions?limit=-1&filter[policy][_eq]=${policy.id}`, {
   token: admin,

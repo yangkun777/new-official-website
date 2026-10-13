@@ -85,6 +85,13 @@ const seriesArr = await dGet("/items/series", {
 });
 const series = seriesArr?.[0] ?? null;
 
+const products = await dGet("/items/product", {
+  "filter[status][_eq]": "published",
+  fields: "id,order_no,title,translations.language,translations.slug,translations.name",
+  limit: "20",
+});
+const product = products?.find((item) => item.translations?.some((t) => t.language === "en")) ?? null;
+
 const newsAll = await dGet("/items/news", {
   "filter[status][_eq]": "published",
   fields: "id,translations.language,translations.slug,translations.name",
@@ -98,6 +105,7 @@ console.log("  level1 :", l1 && pick(l1, "en").slug);
 console.log("  level2 :", l2 && pick(l2, "en").slug);
 console.log("  level3 :", l3 && pick(l3, "en").slug);
 console.log("  series :", series?.matecode);
+console.log("  product:", product?.order_no);
 console.log("  news en:", newsEn && pick(newsEn, "en").slug);
 console.log("  news zh:", newsZh && pick(newsZh, "zh").slug);
 console.log("");
@@ -173,6 +181,18 @@ if (series) {
       `[${rz.status}] → ${rz.location}`
     );
   }
+}
+
+// ---------- 4.1 SKU 产品详情 ----------
+console.log("\nC2. SKU 产品详情");
+if (product) {
+  const orderNo = product.order_no;
+  const r = await wGet(`/en/product/${orderNo}`);
+  check(`/en 产品详情 200 (${orderNo})`, r.status === 200, `[${r.status}]`);
+  check("产品详情显示订货号", r.text.includes(orderNo), "");
+  check("产品详情包含 Product JSON-LD", r.text.includes('"@type":"Product"'), "");
+  const missing = await wGet("/en/product/__no_such_order_no__");
+  check("不存在的产品详情 → 404", missing.status === 404, `[${missing.status}]`);
 }
 
 // ---------- 5. 新闻 ----------

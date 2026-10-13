@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LANGS, type Lang } from "@/lib/lang";
-import { localePath } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
 
 const LABEL: Record<Lang, string> = { en: "English", zh: "中文" };
 
@@ -13,10 +13,12 @@ export default function LangSwitcher({
   lang,
   path,
   available = [...LANGS],
+  paths,
 }: {
   lang: Lang;
   path: string;
   available?: Lang[];
+  paths?: Partial<Record<Lang, string>>;
 }) {
   const list = available.includes(lang) ? available : [lang, ...available];
 
@@ -31,7 +33,7 @@ export default function LangSwitcher({
             </span>
           ) : (
             <Link
-              href={localePath(code, path)}
+              href={siteUrl(code, paths?.[code] ?? path)}
               hrefLang={code === "zh" ? "zh-Hans" : code}
               className="text-slate-500 hover:text-[#003f88]"
             >

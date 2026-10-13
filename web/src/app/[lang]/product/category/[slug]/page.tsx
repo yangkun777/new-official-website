@@ -10,7 +10,8 @@ import {
   getSeriesByCategory,
 } from "@/lib/repo";
 import { toLang, type Lang } from "@/lib/lang";
-import { absUrl, hreflangMap, localePath } from "@/lib/site";
+import { hreflangMap, siteUrl } from "@/lib/site";
+import { serializeJsonLd, socialMetadata } from "@/lib/seo";
 import type { Category, Crumb } from "@/types/product";
 
 export const revalidate = 60;
@@ -29,15 +30,18 @@ export async function generateMetadata({
   if (!found) return {};
   const cat = found.category;
   const path = `/product/category/${cat.slug}`;
+  const title = cat.seo_title ?? cat.name;
+  const description = (
+    cat.seo_description ??
+    cat.description ??
+    `${cat.name} from DEGSON`
+  ).slice(0, 160);
   return {
-    title: cat.seo_title ?? cat.name,
-    description: (
-      cat.seo_description ??
-      cat.description ??
-      `${cat.name} from DEGSON`
-    ).slice(0, 160),
+    title,
+    description,
+    ...socialMetadata({ title, description, url: siteUrl(found.resolvedLang, path) }),
     alternates: {
-      canonical: absUrl(localePath(found.resolvedLang, path)),
+      canonical: siteUrl(found.resolvedLang, path),
       languages: hreflangMap(path, found.availableLangs),
     },
   };
@@ -45,8 +49,8 @@ export async function generateMetadata({
 
 function buildCrumbs(cat: Category, lang: Lang): Crumb[] {
   const crumbs: Crumb[] = [
-    { id: 0, title: "Home", href: localePath(lang, "/") },
-    { id: 0, title: "Products", href: localePath(lang, "/#products") },
+    { id: 0, title: "Home", href: siteUrl(lang, "/") },
+    { id: 0, title: "Products", href: siteUrl(lang, "/#products") },
   ];
   const parent = cat.parent_id;
   if (parent) {
@@ -55,7 +59,7 @@ function buildCrumbs(cat: Category, lang: Lang): Crumb[] {
     crumbs.push({
       id: parent.id,
       title: parent.name,
-      href: localePath(lang, `/product/category/${parent.slug}`),
+      href: siteUrl(lang, `/product/category/${parent.slug}`),
     });
   }
   crumbs.push({ id: cat.id, title: cat.name, current: true });
@@ -80,12 +84,12 @@ export default async function CategoryPage({
 
   // slug 属于某一条翻译行 → 收敛到该行语言的 URL，避免跨语言重复内容
   if (found.resolvedLang !== lang) {
-    redirect(localePath(found.resolvedLang, `/product/category/${slug}`));
+    redirect(siteUrl(found.resolvedLang, `/product/category/${slug}`));
   }
 
   const cat = found.category;
   const crumbs = buildCrumbs(cat, lang);
-  const pageUrl = absUrl(localePath(lang, `/product/category/${cat.slug}`));
+  const pageUrl = siteUrl(lang, `/product/category/${cat.slug}`);
 
   const jsonLdCrumb = {
     "@type": "BreadcrumbList",
@@ -93,7 +97,7 @@ export default async function CategoryPage({
       "@type": "ListItem",
       position: i + 1,
       name: c.title,
-      ...(c.href ? { item: absUrl(c.href) } : {}),
+      ...(c.href ? { item: c.href } : {}),
     })),
   };
 
@@ -117,7 +121,7 @@ export default async function CategoryPage({
       <>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
         <Breadcrumb items={crumbs} />
         <section
@@ -183,7 +187,7 @@ export default async function CategoryPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <Breadcrumb items={crumbs} />
       <section className="border-b border-slate-200 bg-slate-50">
@@ -207,7 +211,7 @@ export default async function CategoryPage({
                 page={page}
                 totalPages={totalPages}
                 total={total}
-                basePath={localePath(lang, `/product/category/${cat.slug}`)}
+                basePath={siteUrl(lang, `/product/category/${cat.slug}`)}
               />
             </div>
           </>

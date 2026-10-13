@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { localePath } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
 import type { Lang } from "@/lib/lang";
 
 const NAV = [
@@ -18,7 +18,7 @@ export default function SiteHeader({
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href={localePath(lang, "/")} className="flex items-center gap-2">
+        <Link href={siteUrl(lang, "/")} className="flex items-center gap-2">
           <span className="text-lg font-bold tracking-tight text-[#003f88]">
             {siteName}
           </span>
@@ -27,7 +27,7 @@ export default function SiteHeader({
           {NAV.map((n) => (
             <Link
               key={n.path}
-              href={localePath(lang, n.path)}
+              href={siteUrl(lang, n.path)}
               className="text-slate-600 hover:text-[#003f88]"
             >
               {n.label}

@@ -1,22 +1,30 @@
 // Directus REST 取数封装：前台只通过此文件访问数据，不持有任何数据库凭据。
 // 缓存策略：dev 下 no-store（闭环演示——改后台立即反映）；prod 用 ISR 60s + tag。
 
+import type { ContentTag } from "./cacheTags";
+
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const TOKEN = process.env.DIRECTUS_TOKEN ?? "";
 
-function init(tag: string): RequestInit {
+type NextFetchInit = RequestInit & {
+  next?: { revalidate?: number; tags?: string[] };
+};
+
+function init(tag?: ContentTag): NextFetchInit {
   const headers = { Authorization: `Bearer ${TOKEN}` };
   if (process.env.NODE_ENV === "development") {
     return { headers, cache: "no-store" };
   }
-  return { headers, next: { revalidate: 60, tags: [tag] } };
+  return tag
+    ? { headers, next: { revalidate: 60, tags: [tag] } }
+    : { headers, next: { revalidate: 60 } };
 }
 
 /** 取单条/单对象（返回 data 字段） */
 export async function apiGet<T>(
   path: string,
   params?: Record<string, string>,
-  tag = "default"
+  tag?: ContentTag
 ): Promise<T> {
   const url = new URL(BASE + path);
   if (params) for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
@@ -30,7 +38,7 @@ export async function apiGet<T>(
 export async function apiGetList<T>(
   path: string,
   params?: Record<string, string>,
-  tag = "default"
+  tag?: ContentTag
 ): Promise<{ items: T[]; total: number }> {
   const url = new URL(BASE + path);
   const merged = { ...(params ?? {}), meta: "filter_count" };

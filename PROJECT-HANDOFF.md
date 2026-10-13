@@ -1,7 +1,10 @@
 # DEGSON 新官网项目 · 交接文档（给 AI 模型 / 新接手开发者）
 
+> 当前基座加固基线：`docs/新官网基座优化版PRD_2026-10-08.md`。本交接文档中的历史 M0.2 内容不得覆盖新版 URL、数据约束和安全契约。
+
 > **本文档的目的**：让任何模型或开发者在 5 分钟内理解「这个项目要做什么、现在做到哪、下一步做什么、有哪些坑不能踩」。
-> **最后更新**：2026-09-24（M1 前台改造完成）；**当前 Git / worktree / 试点总况**见 [`docs/AI-项目总况.md`](docs/AI-项目总况.md)（2026-10-13 起维护）。
+> **最后更新**：2026-10-13（已合并 `feat/base-hardening`：后台图片体验 + Excel 列表导入导出试点）；基座 SEO/GEO 加固见 2026-10-08 记录。
+> **当前 Git / worktree / 试点总况**：[`docs/AI-项目总况.md`](docs/AI-项目总况.md)
 > **如果你只读一段**：读 §1 和 §9；接手后台试点前先读 **AI-项目总况** §2、§6。
 
 ---
@@ -18,7 +21,7 @@ M0.3 底座：删库可重建（已验收）
 M1 前台：新模型适配 + 路径式多语言 + SEO/GEO 基建（34/34 自动验收通过）
 ```
 
-**下一步**：M2 —— 全量页型、Meilisearch、全量数据迁移演练、CI/CD。
+**下一步**：M2 —— 参数/产品详情、Meilisearch、全量数据迁移演练、301 与 CI/CD。
 
 ---
 
@@ -259,7 +262,7 @@ product.title / order_no / poles / pitch → 留在主表，变体表不用改
 
 ### 9.3 M2 地基（下一个里程碑，按优先级）
 
-1. **补齐 SEO 基建剩余部分**：`sitemap`（**>5 万 URL 自动分片**）、`robots.txt`、`llms.txt`、`og:*`、x-default 已就位但需随语言扩展复核
+1. **扩展 SEO 基建**：当前 sitemap、robots.txt、llms.txt、`og:*`、x-default 已在基座就位；后续补 >5 万 URL 自动分片和真实 staging 域名复核
 2. **Meilisearch**：多语言分词 + 极数/间距/连接方式筛选
 3. **读只读凭据的自动化**：现在靠 `data/make_web_token.mjs` 手工建，应纳入初始化脚本
 4. **CI/CD**：Git 已就位，缺自动构建部署
@@ -284,9 +287,9 @@ product.title / order_no / poles / pitch → 留在主表，变体表不用改
 | 缺口 | 说明 |
 |---|---|
 | `site_settings` 无翻译表 | 现在 `hero_title` / `footer_text` 等对所有语言同一份。**首页副标题实测已是英文**，中文站会显示英文。补法：加 `site_settings_translations`，需走 §11 模型变更流程 |
-| 无 `sitemap.xml` / `robots.txt` / `llms.txt` | M1 只做了 `canonical` + `hreflang` + `<html lang>` + JSON-LD |
-| 无 `og:*` / Twitter Card | metadata 未配 `openGraph` |
-| 分类/系列页 JSON-LD 仍是 `CollectionPage` | 未加 `ItemList`，产品页 `Product` 未加 `offers`（无价格，需按 PRD §8.1.1 决定） |
+| sitemap / robots / llms | 基座已实现；大规模 URL 分片和真实生产域名复核仍待 M2 |
+| OG/Twitter Card | 基座已实现默认和页面级 metadata；运营字段和图片策略仍待后续 |
+| 分类/系列页 JSON-LD | 基座已有 CollectionPage；ItemList、Product offers 等业务增强仍待产品参数模型确定 |
 | 无 `data/99_verify.sql` 更新 | 字段已变，该脚本仍按旧模型写，**跑之前要先改** |
 | 无 301 重定向表 | 旧站 `details_552_*` → 新 URL 的映射未建 |
 | **响应式未达标（PRD §7.4 要求 3/4，验收级）** | `SiteHeader` 无移动端导航形态；`VariantTable` 仅有 `overflow-x-auto` 横向滚动，未做移动端卡片形态。M1 静态盘点：**48 处断点类 / 11/18 文件含断点**，卡片栅格与容器留白已适配，`viewport` meta 由 Next 默认注入；但**从未按视口实测**（要求 2 未验证）。PRD §7.4 要求六个视口宽度 × 五类页型 + iOS/Android 真机各一轮 |
@@ -322,6 +325,7 @@ product.title / order_no / poles / pitch → 留在主表，变体表不用改
 | `data/verify_m1_web.mjs` | **前台端到端验收（34 项）**，改前台后必跑 |
 | `data/03_seed.sql` | 从旧库底料 `degson_legacy` 生成业务数据 |
 | `data/99_verify.sql` | 数据自检（**字段已变，跑之前先按新模型更新**） |
+| `data/migration/buildCategoryMapTemplate.mjs` | 从 dry-run 生成不带猜测目标的分类映射审核模板 |
 
 **模型变更的唯一正确流程**：
 ```

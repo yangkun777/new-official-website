@@ -2,7 +2,7 @@ import Link from "next/link";
 import ProductImage from "./ProductImage";
 import type { SeriesListItem } from "@/types/product";
 import type { Lang } from "@/lib/lang";
-import { localePath } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
 
 export default function SeriesCard({
   series,
@@ -13,7 +13,7 @@ export default function SeriesCard({
 }) {
   return (
     <Link
-      href={localePath(series.lang, `/product/series/${series.matecode}`)}
+      href={siteUrl(series.lang, `/product/series/${series.matecode}`)}
       className="group block overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-[#003f88]/30 hover:shadow-lg"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-slate-50">

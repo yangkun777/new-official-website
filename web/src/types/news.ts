@@ -14,6 +14,8 @@ export interface NewsListItem {
   lang: Lang;
   /** true = 请求语言无翻译，这一条来自 en 回退 */
   fallback: boolean;
+  /** CMS 主表真实更新时间；为空时 sitemap 不输出 lastmod。 */
+  updated_at?: string | null;
 }
 
 export interface NewsDetail extends NewsListItem {
