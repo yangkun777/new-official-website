@@ -51,6 +51,62 @@ async function ensureCollection(name, note) {
   return false;
 }
 
+/** 建仅用于后台导航的 collection group（无数据库表）。 */
+async function ensureCollectionGroup(name, translation, sort) {
+  const all = await api('GET', '/collections');
+  const exists = (all.json?.data || []).some((c) => c.collection === name);
+  if (!exists) {
+    const r = await api('POST', '/collections', {
+      collection: name,
+      meta: {
+        icon: 'folder',
+        hidden: false,
+        sort,
+        translations: [{ language: 'zh-CN', translation }],
+      },
+      schema: null,
+    });
+    if (r.status < 200 || r.status >= 300) {
+      console.log(`  ✗ 导航分组 ${name} 失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 260)}`);
+      fail++; failures.push(`collection-group:${name}`);
+      return false;
+    }
+    console.log(`  + 导航分组 ${name}`);
+    ok++;
+  }
+  return ensureCollectionMeta(name, {
+    group: null,
+    hidden: false,
+    sort,
+    icon: 'folder',
+    translations: [{ language: 'zh-CN', translation }],
+  });
+}
+
+/** 补齐集合的后台导航元数据。 */
+async function ensureCollectionMeta(collection, meta) {
+  const current = await api('GET', `/collections/${collection}`);
+  if (current.status < 200 || current.status >= 300) {
+    console.log(`  ✗ 集合 ${collection} 元数据读取失败 ${current.status}`);
+    fail++; failures.push(`collection-meta-read:${collection}`);
+    return false;
+  }
+  const currentMeta = current.json?.data?.meta ?? {};
+  const needsPatch = Object.entries(meta).some(([key, value]) =>
+    JSON.stringify(currentMeta[key]) !== JSON.stringify(value),
+  );
+  if (!needsPatch) { skip++; return true; }
+  const r = await api('PATCH', `/collections/${collection}`, { meta });
+  if (r.status >= 200 && r.status < 300) {
+    console.log(`  ↻ 集合 ${collection} 导航元数据已补齐`);
+    ok++;
+    return true;
+  }
+  console.log(`  ✗ 集合 ${collection} 导航元数据失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`collection-meta:${collection}`);
+  return false;
+}
+
 /** 建字段 */
 async function ensureField(collection, field, type, schema = {}, meta = {}) {
   const r = await api('POST', `/fields/${collection}`, {
@@ -130,6 +186,32 @@ async function buildTranslation(collection, parentCollection, parentField, note)
 
 console.log('=== DEGSON 底座建模（Directus 11）===');
 console.log('BASE =', BASE);
+
+const MENU_GROUPS = {
+  product_management: { translation: '产品管理', sort: 1 },
+  content_management: { translation: '内容管理', sort: 2 },
+  site_configuration: { translation: '站点配置', sort: 3 },
+};
+
+const COLLECTION_MENU_META = {
+  category: { group: 'product_management', hidden: false, sort: 1, translations: [{ language: 'zh-CN', translation: '产品分类' }] },
+  series: { group: 'product_management', hidden: false, sort: 2, translations: [{ language: 'zh-CN', translation: '产品系列' }] },
+  product: { group: 'product_management', hidden: false, sort: 3, translations: [{ language: 'zh-CN', translation: '产品' }] },
+  media: { group: 'product_management', hidden: false, sort: 4, translations: [{ language: 'zh-CN', translation: '媒体' }] },
+  product_media: { group: 'product_management', hidden: true, sort: 5, translations: [{ language: 'zh-CN', translation: '产品媒体关联' }] },
+  category_translations: { group: 'product_management', hidden: true, sort: 6, translations: [{ language: 'zh-CN', translation: '分类翻译' }] },
+  series_translations: { group: 'product_management', hidden: true, sort: 7, translations: [{ language: 'zh-CN', translation: '系列翻译' }] },
+  product_translations: { group: 'product_management', hidden: true, sort: 8, translations: [{ language: 'zh-CN', translation: '产品翻译' }] },
+  news: { group: 'content_management', hidden: false, sort: 1, translations: [{ language: 'zh-CN', translation: '新闻' }] },
+  news_translations: { group: 'content_management', hidden: true, sort: 2, translations: [{ language: 'zh-CN', translation: '新闻翻译' }] },
+  site_settings: { group: 'site_configuration', hidden: false, sort: 1 },
+  languages: { group: 'site_configuration', hidden: false, sort: 2 },
+};
+
+console.log('\n### 后台导航分组');
+for (const [collection, { translation, sort }] of Object.entries(MENU_GROUPS)) {
+  await ensureCollectionGroup(collection, translation, sort);
+}
 
 // ---------- 1. category ----------
 console.log('\n### category');
@@ -349,7 +431,13 @@ for (const [code, name, sort] of [['en', 'English', 1], ['zh', '简体中文', 2
   else { console.log(`  ✗ 语言 ${code} 失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 160)}`); fail++; failures.push(`lang:${code}`); }
 }
 
+console.log('\n### 后台集合菜单');
+for (const [collection, meta] of Object.entries(COLLECTION_MENU_META)) {
+  await ensureCollectionMeta(collection, meta);
+}
+
 console.log('\n============================================');
 console.log(`结果：新增 ${ok} / 跳过 ${skip} / 失败 ${fail}`);
 if (failures.length) { console.log('失败项：'); failures.forEach((f) => console.log('  - ' + f)); }
 console.log('============================================');
+if (fail > 0) process.exitCode = 1;

@@ -11,6 +11,8 @@ const checks = [
   ["product media schema", ["data/verify_product_media.mjs"]],
   ["category pagination", ["data/verify_category_pagination.mjs"]],
   ["pagination limits", ["data/verify_pagination_limits.mjs"]],
+  ["native import/export contract", ["data/verify_native_import_export_contract.mjs"]],
+  ["native import/export cleanup", ["data/verify_native_import_export_cleanup.mjs"]],
   ["model builder syntax", ["--check", "data/build_model.mjs"]],
 ];
 
@@ -23,5 +25,5 @@ for (const [label, args] of checks) {
   process.stdout.write(`PASS ${label}\n`);
 }
 
-assert.equal(checks.length, 10);
+assert.equal(checks.length, 12);
 console.log("PASS base hardening verifier");

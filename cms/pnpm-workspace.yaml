@@ -17,3 +17,4 @@ allowBuilds:
   oracledb: false
   sqlite3: false
   braintrust: false
+  vue-demi: true

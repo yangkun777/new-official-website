@@ -11,6 +11,15 @@ async function get(path) {
   return response.json();
 }
 
+async function getOptionalCollection(collection) {
+  const response = await fetch(`${BASE}/collections/${collection}`, { headers });
+  if (response.status === 403 || response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`GET /collections/${collection} failed: ${response.status}`);
+  }
+  return response.json();
+}
+
 const expectedNotes = {
   "category.level": "层级：1 一级、2 二级、3 三级",
   "category.parent_id": "上级分类；一级分类留空",
@@ -119,10 +128,33 @@ const expectedCollectionTranslations = {
   product_media: "产品媒体关联",
 };
 
+const expectedMenuGroups = {
+  product_management: { translation: "产品管理", sort: 1 },
+  content_management: { translation: "内容管理", sort: 2 },
+  site_configuration: { translation: "站点配置", sort: 3 },
+};
+
+const expectedCollectionMenu = {
+  category: { group: "product_management", hidden: false, sort: 1 },
+  series: { group: "product_management", hidden: false, sort: 2 },
+  product: { group: "product_management", hidden: false, sort: 3 },
+  media: { group: "product_management", hidden: false, sort: 4 },
+  product_media: { group: "product_management", hidden: true, sort: 5 },
+  category_translations: { group: "product_management", hidden: true, sort: 6 },
+  series_translations: { group: "product_management", hidden: true, sort: 7 },
+  product_translations: { group: "product_management", hidden: true, sort: 8 },
+  news: { group: "content_management", hidden: false, sort: 1 },
+  news_translations: { group: "content_management", hidden: true, sort: 2 },
+  site_settings: { group: "site_configuration", hidden: false, sort: 1 },
+  languages: { group: "site_configuration", hidden: false, sort: 2 },
+};
+
 const expectedChecks = Object.keys(expectedNotes).length
   + hiddenFields.length
   + Object.keys(expectedTranslations).length
-  + Object.keys(expectedCollectionTranslations).length;
+  + Object.keys(expectedCollectionTranslations).length
+  + Object.keys(expectedMenuGroups).length
+  + Object.keys(expectedCollectionMenu).length;
 
 const failures = [];
 for (const [key, note] of Object.entries(expectedNotes)) {
@@ -165,6 +197,33 @@ for (const [collection, translation] of Object.entries(expectedCollectionTransla
   if (!translations.some((item) => item.language === "zh-CN" && item.translation === translation)) {
     failures.push(`${collection}.translation`);
   }
+}
+
+for (const [collection, expected] of Object.entries(expectedMenuGroups)) {
+  const payload = await getOptionalCollection(collection);
+  if (!payload) {
+    failures.push(`${collection}.missing`);
+    continue;
+  }
+  const meta = payload.data?.meta;
+  const translations = meta?.translations ?? [];
+  if (payload.data?.schema !== null) failures.push(`${collection}.schema`);
+  if (meta?.group !== null) failures.push(`${collection}.group`);
+  if (meta?.hidden !== false) failures.push(`${collection}.hidden`);
+  if (meta?.sort !== expected.sort) failures.push(`${collection}.sort`);
+  if (!translations.some((item) =>
+    item.language === "zh-CN" && item.translation === expected.translation
+  )) {
+    failures.push(`${collection}.translation`);
+  }
+}
+
+for (const [collection, expected] of Object.entries(expectedCollectionMenu)) {
+  const payload = await get(`/collections/${collection}`);
+  const meta = payload.data?.meta;
+  if (meta?.group !== expected.group) failures.push(`${collection}.group`);
+  if (meta?.hidden !== expected.hidden) failures.push(`${collection}.hidden`);
+  if (meta?.sort !== expected.sort) failures.push(`${collection}.sort`);
 }
 
 if (failures.length) {

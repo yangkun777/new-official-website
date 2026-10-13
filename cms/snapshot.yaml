@@ -12,7 +12,7 @@ collections:
       collection: category
       color: null
       display_template: null
-      group: null
+      group: product_management
       hidden: false
       icon: null
       item_duplication_fields: null
@@ -38,14 +38,14 @@ collections:
       collection: category_translations
       color: null
       display_template: null
-      group: null
-      hidden: false
+      group: product_management
+      hidden: true
       icon: null
       item_duplication_fields: null
       note: 分类翻译行（每语言一行）
       preview_url: null
       singleton: false
-      sort: 36
+      sort: 6
       sort_field: null
       translations:
         - language: zh-CN
@@ -54,6 +54,30 @@ collections:
       versioning: false
     schema:
       name: category_translations
+  - collection: content_management
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: content_management
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: folder
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 2
+      sort_field: null
+      translations:
+        - language: zh-CN
+          translation: 内容管理
+      unarchive_value: null
+      versioning: false
   - collection: languages
     meta:
       accountability: all
@@ -64,14 +88,14 @@ collections:
       collection: languages
       color: null
       display_template: null
-      group: null
+      group: site_configuration
       hidden: false
       icon: null
       item_duplication_fields: null
       note: 语言注册表：全站语言码的单一来源（en / zh / de …）
       preview_url: null
       singleton: false
-      sort: 1
+      sort: 2
       sort_field: null
       translations: null
       unarchive_value: null
@@ -88,14 +112,14 @@ collections:
       collection: media
       color: null
       display_template: null
-      group: null
+      group: product_management
       hidden: false
       icon: null
       item_duplication_fields: null
       note: 统一媒体元数据（文件本体保存在 Directus 文件库）
       preview_url: null
       singleton: false
-      sort: 1
+      sort: 4
       sort_field: null
       translations:
         - language: zh-CN
@@ -114,14 +138,14 @@ collections:
       collection: news
       color: null
       display_template: null
-      group: null
+      group: content_management
       hidden: false
       icon: null
       item_duplication_fields: null
       note: 新闻/文章主数据（标题正文等可翻译字段在 news_translations）
       preview_url: null
       singleton: false
-      sort: 29
+      sort: 1
       sort_field: null
       translations:
         - language: zh-CN
@@ -140,14 +164,14 @@ collections:
       collection: news_translations
       color: null
       display_template: null
-      group: null
-      hidden: false
+      group: content_management
+      hidden: true
       icon: null
       item_duplication_fields: null
       note: 新闻翻译行（每语言一行）
       preview_url: null
       singleton: false
-      sort: 34
+      sort: 2
       sort_field: null
       translations:
         - language: zh-CN
@@ -166,14 +190,14 @@ collections:
       collection: product
       color: null
       display_template: null
-      group: null
+      group: product_management
       hidden: false
       icon: null
       item_duplication_fields: null
       note: 产品变体（order_no = 订货号，全库唯一；语言无关字段）
       preview_url: null
       singleton: false
-      sort: 19
+      sort: 3
       sort_field: null
       translations:
         - language: zh-CN
@@ -182,6 +206,30 @@ collections:
       versioning: false
     schema:
       name: product
+  - collection: product_management
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: product_management
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: folder
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 1
+      sort_field: null
+      translations:
+        - language: zh-CN
+          translation: 产品管理
+      unarchive_value: null
+      versioning: false
   - collection: product_media
     meta:
       accountability: all
@@ -192,14 +240,14 @@ collections:
       collection: product_media
       color: null
       display_template: null
-      group: null
-      hidden: false
+      group: product_management
+      hidden: true
       icon: null
       item_duplication_fields: null
       note: SKU 媒体关联（主图/详情图/工程图按用途和顺序管理）
       preview_url: null
       singleton: false
-      sort: 11
+      sort: 5
       sort_field: null
       translations:
         - language: zh-CN
@@ -218,14 +266,14 @@ collections:
       collection: product_translations
       color: null
       display_template: null
-      group: null
-      hidden: false
+      group: product_management
+      hidden: true
       icon: null
       item_duplication_fields: null
       note: 产品翻译行（每语言一行）
       preview_url: null
       singleton: false
-      sort: 21
+      sort: 8
       sort_field: null
       translations:
         - language: zh-CN
@@ -244,14 +292,14 @@ collections:
       collection: series
       color: null
       display_template: null
-      group: null
+      group: product_management
       hidden: false
       icon: null
       item_duplication_fields: null
       note: 产品系列（matecode = 系列码，语言无关）
       preview_url: null
       singleton: false
-      sort: 10
+      sort: 2
       sort_field: null
       translations:
         - language: zh-CN
@@ -270,14 +318,14 @@ collections:
       collection: series_translations
       color: null
       display_template: null
-      group: null
-      hidden: false
+      group: product_management
+      hidden: true
       icon: null
       item_duplication_fields: null
       note: 系列翻译行（每语言一行）
       preview_url: null
       singleton: false
-      sort: 8
+      sort: 7
       sort_field: null
       translations:
         - language: zh-CN
@@ -286,6 +334,30 @@ collections:
       versioning: false
     schema:
       name: series_translations
+  - collection: site_configuration
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: site_configuration
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: folder
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 3
+      sort_field: null
+      translations:
+        - language: zh-CN
+          translation: 站点配置
+      unarchive_value: null
+      versioning: false
   - collection: site_settings
     meta:
       accountability: all
@@ -296,14 +368,14 @@ collections:
       collection: site_settings
       color: null
       display_template: null
-      group: null
+      group: site_configuration
       hidden: false
       icon: null
       item_duplication_fields: null
       note: 站点设置（单例）
       preview_url: null
       singleton: false
-      sort: 47
+      sort: 1
       sort_field: null
       translations: null
       unarchive_value: null

@@ -32,6 +32,34 @@ async function patchCollection(collection, meta) {
   }
 }
 
+async function ensureCollectionGroup(collection, translation, sort) {
+  const response = await fetch(`${BASE}/collections/${collection}`, { headers });
+  if (response.ok) return;
+  if (response.status !== 403 && response.status !== 404) {
+    const body = await response.text();
+    throw new Error(`GET collection ${collection} failed: ${response.status} ${body}`);
+  }
+
+  const createResponse = await fetch(`${BASE}/collections`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      collection,
+      meta: {
+        icon: "folder",
+        hidden: false,
+        sort,
+        translations: [{ language: "zh-CN", translation }],
+      },
+      schema: null,
+    }),
+  });
+  if (!createResponse.ok) {
+    const body = await createResponse.text();
+    throw new Error(`POST collection group ${collection} failed: ${createResponse.status} ${body}`);
+  }
+}
+
 const mediaEditorMeta = {
   "category.image": {
     interface: "product-media-editor",
@@ -169,6 +197,41 @@ const expectedCollectionTranslations = {
   product_media: "产品媒体关联",
 };
 
+const menuGroups = {
+  product_management: { translation: "产品管理", sort: 1 },
+  content_management: { translation: "内容管理", sort: 2 },
+  site_configuration: { translation: "站点配置", sort: 3 },
+};
+
+const collectionMenuMeta = {
+  category: { group: "product_management", hidden: false, sort: 1 },
+  series: { group: "product_management", hidden: false, sort: 2 },
+  product: { group: "product_management", hidden: false, sort: 3 },
+  media: { group: "product_management", hidden: false, sort: 4 },
+  product_media: { group: "product_management", hidden: true, sort: 5 },
+  category_translations: { group: "product_management", hidden: true, sort: 6 },
+  series_translations: { group: "product_management", hidden: true, sort: 7 },
+  product_translations: { group: "product_management", hidden: true, sort: 8 },
+  news: { group: "content_management", hidden: false, sort: 1 },
+  news_translations: { group: "content_management", hidden: true, sort: 2 },
+  site_settings: { group: "site_configuration", hidden: false, sort: 1 },
+  languages: { group: "site_configuration", hidden: false, sort: 2 },
+};
+
+for (const [collection, { translation, sort }] of Object.entries(menuGroups)) {
+  await ensureCollectionGroup(collection, translation, sort);
+  await patchCollection(collection, {
+    group: null,
+    hidden: false,
+    sort,
+    icon: "folder",
+    translations: [{ language: "zh-CN", translation }],
+  });
+}
+for (const [collection, meta] of Object.entries(collectionMenuMeta)) {
+  await patchCollection(collection, meta);
+}
+
 for (const [key, note] of Object.entries(expectedNotes)) {
   const [collection, field] = key.split(".");
   await patchField(collection, field, { note });
@@ -189,4 +252,4 @@ for (const [collection, translation] of Object.entries(expectedCollectionTransla
   await patchCollection(collection, { translations: [{ language: "zh-CN", translation }] });
 }
 
-console.log(`UPDATED ${Object.keys(expectedNotes).length + hiddenFields.length + Object.keys(expectedTranslations).length + Object.keys(expectedCollectionTranslations).length + Object.keys(mediaEditorMeta).length}`);
+console.log(`UPDATED ${Object.keys(expectedNotes).length + hiddenFields.length + Object.keys(expectedTranslations).length + Object.keys(expectedCollectionTranslations).length + Object.keys(mediaEditorMeta).length + Object.keys(menuGroups).length + Object.keys(collectionMenuMeta).length}`);
