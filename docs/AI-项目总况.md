@@ -17,7 +17,7 @@
 
 ## 1. 一句话
 
-**重建 DEGSON 官网**：一套 **Next.js 前台** + 一个 **Directus 11** + 一个 **MySQL 8**，主数据 + `*_translations` 多语言；本地已跑通 **M0.3 底座 + M1 前台**（路径式 `/en` `/zh`）。**尚无线上 Git 远程**；部分后台试点（Excel 列表导入导出、菜单分组等）在 **本地 worktree 分支** 开发，**未全部合并进 `master`**。
+**重建 DEGSON 官网**：一套 **Next.js 前台** + 一个 **Directus 11** + 一个 **MySQL 8**，主数据 + `*_translations` 多语言；本地已跑通 **M0.3 底座 + M1 前台**（路径式 `/en` `/zh`）。远程已推到 GitHub；**`feat/base-hardening`（含 Excel 列表导入导出试点等）已于 2026-10-13 合并进 `master`**。
 
 ---
 
@@ -27,21 +27,14 @@
 |----|------|
 | 远程仓库 | **已配置**：`https://github.com/yangkun777/new-official-website.git`（`origin`） |
 | 默认分支 | `master` @ `D:\degson-pilot`（已跟踪 `origin/master`） |
-| 功能分支 | `feat/base-hardening`（已跟踪 `origin/feat/base-hardening`；比 `master` 多一批后台试点提交） |
-| 双工作区 | `git worktree`：`D:\degson-pilot\.worktrees\base-hardening` → 检出 `feat/base-hardening` |
-| `.gitignore` | 含 `.worktrees/`（主工作区不跟踪 worktree 目录本身） |
-
-**两个目录不要混用**
-
-| 路径 | 分支 | 典型内容 |
-|------|------|----------|
-| `D:\degson-pilot` | `master` | 前台 `web/`、稳定 `cms/`、`data/`、`docs/` |
-| `D:\degson-pilot\.worktrees\base-hardening` | `feat/base-hardening` | 后台 UI 硬化、**excel-hook / excel-tools**、更多 `data/*.mjs` 脚本、未提交改动 |
+| 功能分支 | `feat/base-hardening`（历史分支，内容已合并进 `master`；远程仍保留） |
+| 工作区 | 日常开发以 **`D:\degson-pilot`（`master`）** 为准；`.worktrees/base-hardening` 可忽略或日后清理 |
+| `.gitignore` | 含 `.worktrees/` |
 
 **对 AI 的约束**
 
-- 改 **Excel 导入导出、后台扩展** 时，先确认是在 **worktree** 还是 **master** 的 `cms/extensions`。
-- 远程默认分支名为 **`master`**（不是 `main`）；合并 `feat/base-hardening` 需由人类决定。
+- 扩展在 **`cms/extensions/`**（`excel-hook` / `excel-tools` / `product-media-editor`），从仓库根目录的 `cms` 启动 Directus。
+- 远程默认分支名为 **`master`**（不是 `main`）。
 - **不要**提交 `.env`、`web/.env.local`、token 文件。
 
 ---
@@ -98,9 +91,9 @@ cd D:\degson-pilot\data; node verify_m1_web.mjs   # 期望 PASS 34 / FAIL 0
 
 ---
 
-## 6. 进行中试点（feat/base-hardening / worktree）
+## 6. Excel / 后台试点（已在 master）
 
-> **状态**：多为 **未合并 master**、部分 **未 commit**；仅作演示，**不等于 PRD 验收**。
+> **状态**：已合并 `master`；仍是运营演示级能力，**不等于 PRD 验收**。
 
 ### 6.1 Excel 列表导入 / 导出
 
@@ -193,3 +186,4 @@ D:\degson-pilot\
 |------|------|
 | 2026-10-13 | 初版：Git 无 remote、worktree、Excel 试点范围、PRD 对齐摘要 |
 | 2026-10-13 | 更新：已绑定 GitHub `yangkun777/new-official-website` 并推送 master / feat/base-hardening |
+| 2026-10-13 | `feat/base-hardening` 已合并进 `master`；根 README 改为当前入口页 |
