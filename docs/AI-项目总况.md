@@ -25,9 +25,9 @@
 
 | 项 | 状态 |
 |----|------|
-| 远程仓库 | **无**（`git remote -v` 为空，未 push 到 GitHub/GitLab/Origin） |
-| 默认分支 | `master` @ `D:\degson-pilot` |
-| 功能分支 | `feat/base-hardening`（仅本地，比 `master` 多约 **83** 个 commit） |
+| 远程仓库 | **已配置**：`https://github.com/yangkun777/new-official-website.git`（`origin`） |
+| 默认分支 | `master` @ `D:\degson-pilot`（已跟踪 `origin/master`） |
+| 功能分支 | `feat/base-hardening`（已跟踪 `origin/feat/base-hardening`；比 `master` 多一批后台试点提交） |
 | 双工作区 | `git worktree`：`D:\degson-pilot\.worktrees\base-hardening` → 检出 `feat/base-hardening` |
 | `.gitignore` | 含 `.worktrees/`（主工作区不跟踪 worktree 目录本身） |
 
@@ -41,7 +41,7 @@
 **对 AI 的约束**
 
 - 改 **Excel 导入导出、后台扩展** 时，先确认是在 **worktree** 还是 **master** 的 `cms/extensions`。
-- **不要**假设存在 `origin/main` 或 PR；合并策略需由人类决定。
+- 远程默认分支名为 **`master`**（不是 `main`）；合并 `feat/base-hardening` 需由人类决定。
 - **不要**提交 `.env`、`web/.env.local`、token 文件。
 
 ---
@@ -192,3 +192,4 @@ D:\degson-pilot\
 | 日期 | 说明 |
 |------|------|
 | 2026-10-13 | 初版：Git 无 remote、worktree、Excel 试点范围、PRD 对齐摘要 |
+| 2026-10-13 | 更新：已绑定 GitHub `yangkun777/new-official-website` 并推送 master / feat/base-hardening |
