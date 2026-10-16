@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## 项目约定（人工维护）
+
+- 品牌中文名是 **高松**（英文 DEGSON），**禁止**写「德昌」。详见仓库根目录 [`AGENTS.md`](../AGENTS.md)。

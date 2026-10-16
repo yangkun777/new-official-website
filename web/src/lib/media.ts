@@ -22,6 +22,11 @@ export function resolveMediaUrl(input: string | null | undefined): string | null
   const value = input.trim();
   if (!value) return null;
 
+  // 站点 public/ 下的相对路径（营销图、示例封面等），前台可直接引用
+  if (value.startsWith("/") && !value.startsWith("//")) {
+    return value;
+  }
+
   const directUrl = /^https?:\/\//i.test(value)
     ? value
     : `${(process.env.DIRECTUS_PUBLIC_URL ?? process.env.DIRECTUS_URL ?? "http://localhost:8055").replace(/\/+$/, "")}/assets/${encodeURIComponent(value)}`;

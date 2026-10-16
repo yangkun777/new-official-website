@@ -4,7 +4,6 @@ import { toLang, type Lang } from "@/lib/lang";
 import { hreflangMap, siteUrl } from "@/lib/site";
 import { socialMetadata } from "@/lib/seo";
 import NewsCard from "@/components/NewsCard";
-import LangSwitcher from "@/components/LangSwitcher";
 
 export const revalidate = 60;
 
@@ -19,7 +18,7 @@ export async function generateMetadata({
   const isZh = lang === "zh";
   const title = isZh ? "新闻动态" : "News";
   const description = isZh
-    ? "德昌最新动态与产品资讯。"
+    ? "高松最新动态与产品资讯。"
     : "Latest updates and product news from DEGSON.";
   return {
     title,
@@ -40,18 +39,15 @@ export default async function NewsPage({ params }: PageProps) {
   return (
     <>
       <section className="border-b border-slate-200 bg-slate-50">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-10 sm:px-6 lg:px-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              {isZh ? "新闻动态" : "News"}
-            </h1>
-            <p className="mt-2 text-slate-600">
-              {isZh
-                ? "德昌最新动态与产品资讯。"
-                : "Latest updates and product news from DEGSON."}
-            </p>
-          </div>
-          <LangSwitcher lang={lang} path="/news" />
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold text-slate-900">
+            {isZh ? "新闻动态" : "News"}
+          </h1>
+          <p className="mt-2 text-slate-600">
+            {isZh
+              ? "高松最新动态与产品资讯。"
+              : "Latest updates and product news from DEGSON."}
+          </p>
         </div>
       </section>
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

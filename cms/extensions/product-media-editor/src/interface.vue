@@ -2,7 +2,13 @@
 	<div class="media-editor">
 		<div v-if="value" class="preview-card">
 			<div class="preview-stage">
-				<img v-if="previewUrl" :src="previewUrl" :alt="fileName || '产品图片'" />
+				<img
+					v-if="previewUrl && !previewFailed"
+					:src="previewUrl"
+					:alt="fileName || '产品图片'"
+					@error="previewFailed = true"
+				/>
+				<div v-else-if="previewFailed" class="preview-loading">无法加载预览，请检查图片地址</div>
 				<div v-else class="preview-loading">正在加载预览…</div>
 			</div>
 			<div class="file-meta">
@@ -48,23 +54,60 @@ export default {
 		const fileInfo = ref('');
 		const uploading = ref(false);
 		const errorMessage = ref('');
-		const previewUrl = computed(() => {
-			if (!props.value) return '';
-			if (/^https?:\/\//i.test(props.value)) return props.value;
-			return `/assets/${encodeURIComponent(props.value)}?width=960&fit=inside&quality=85`;
-		});
+		const previewFailed = ref(false);
+		const previewUrl = computed(() => resolvePreviewUrl(props.value));
 
-		watch(() => props.value, loadFile, { immediate: true });
+		watch(
+			() => props.value,
+			(value) => {
+				previewFailed.value = false;
+				loadFile(value);
+			},
+			{ immediate: true },
+		);
 
-		return { fileName, fileInfo, previewUrl, uploading, errorMessage, uploadFile, clearFile };
+		return {
+			fileName,
+			fileInfo,
+			previewUrl,
+			previewFailed,
+			uploading,
+			errorMessage,
+			uploadFile,
+			clearFile,
+		};
+
+		function webOrigin() {
+			if (typeof window === 'undefined') return 'http://localhost:3000';
+			const { protocol, hostname, port } = window.location;
+			if (port === '8055' || port === '') {
+				return `${protocol}//${hostname}:3000`;
+			}
+			return `${protocol}//${hostname}:3000`;
+		}
+
+		function resolvePreviewUrl(value) {
+			if (!value) return '';
+			if (/^https?:\/\//i.test(value)) return value;
+			// 前台 public/ 相对路径，例如 /images/marketing/hero-solutions.jpg
+			if (value.startsWith('/') && !value.startsWith('//')) {
+				return `${webOrigin()}${value}`;
+			}
+			return `/assets/${encodeURIComponent(value)}?width=960&fit=inside&quality=85`;
+		}
 
 		async function loadFile(value) {
 			fileName.value = '';
 			fileInfo.value = '';
 			if (!value) return;
 			if (/^https?:\/\//i.test(value)) {
-				fileName.value = value;
-				fileInfo.value = '历史图片地址';
+				fileName.value = value.split('/').pop() || value;
+				fileInfo.value = '外部图片地址';
+				return;
+			}
+			if (value.startsWith('/') && !value.startsWith('//')) {
+				fileName.value = value.split('/').pop() || value;
+				fileInfo.value = '站点图片';
 				return;
 			}
 			try {

@@ -21,8 +21,10 @@ export default function ProductImage({
   className = "",
 }: Props) {
   const [errored, setErrored] = useState(false);
+  const isLocal = src.startsWith("/");
+  const usable = !errored && src && (ABSOLUTE_URL.test(src) || isLocal);
 
-  if (errored || !src || !ABSOLUTE_URL.test(src)) {
+  if (!usable) {
     return <div className={`bg-slate-100 ${className}`} aria-hidden="true" />;
   }
 

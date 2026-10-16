@@ -52,6 +52,16 @@ const expectedNotes = {
   "product_media.is_primary": "设为主图",
   "news.publish_date": "用于新闻排序和页面展示",
   "news.status": "仅发布状态会出现在官网",
+  "page_sections.page_slug": "目前前台只渲染「服务」。方案/关于可先建板块，暂不展示。",
+  "page_sections.parent_id": "上级板块；顶级板块留空。例如「强大的研发能力」的上级是「研发技术能力」。",
+  "page_sections.list_title": "后台列表和左边层级显示用，不直接当 H1。",
+  "page_sections.sort": "数字越小越靠前",
+  "page_sections.status": "仅发布状态会出现在官网",
+  "page_sections.image": "建议约 498×280。可上传或粘贴地址；空则前台不显示该图",
+  "page_sections.translations": "按语言填写简介、数据和介绍。一般保留中文 zh、英文 en 各一条。",
+  "page_sections_translations.language": "语言码固定使用 en / zh",
+  "page_sections_translations.intro": "板块开篇说明，对应旧后台「简介」",
+  "page_sections_translations.stat1": "数字或短标签，例如 500",
   "category_translations.language": "语言码固定使用 en / zh",
   "category_translations.slug": "URL slug；同一语言下必须唯一",
   "series_translations.language": "语言码固定使用 en / zh",
@@ -70,6 +80,7 @@ const hiddenFields = [
   "product_translations.created_at", "product_translations.updated_at",
   "news.created_at", "news.updated_at",
   "news_translations.created_at", "news_translations.updated_at",
+  "page_sections.code",
 ];
 
 const expectedTranslations = {
@@ -113,6 +124,23 @@ const expectedTranslations = {
   "news_translations.language": "语言",
   "news_translations.name": "新闻标题",
   "news_translations.slug": "URL 标识",
+  "page_sections.page_slug": "所属页面",
+  "page_sections.parent_id": "上级板块",
+  "page_sections.list_title": "后台显示名",
+  "page_sections.sort": "显示顺序",
+  "page_sections.status": "状态",
+  "page_sections.image": "图片",
+  "page_sections.translations": "多语言内容",
+  "page_sections.children": "子板块",
+  "page_sections_translations.language": "语言",
+  "page_sections_translations.title": "标题",
+  "page_sections_translations.intro": "简介",
+  "page_sections_translations.stat1": "数据 1",
+  "page_sections_translations.stat1_label": "数据 1 介绍",
+  "page_sections_translations.stat2": "数据 2",
+  "page_sections_translations.stat2_label": "数据 2 介绍",
+  "page_sections_translations.intro1": "介绍 1",
+  "page_sections_translations.intro2": "介绍 2",
 };
 
 const expectedCollectionTranslations = {
@@ -126,6 +154,13 @@ const expectedCollectionTranslations = {
   news_translations: "新闻翻译",
   media: "媒体",
   product_media: "产品媒体关联",
+  site_pages: "方案 / 服务 / 关于",
+  site_pages_translations: "方案页翻译",
+  social_links: "社交外链",
+  home_blocks: "首页内容块",
+  home_blocks_translations: "首页内容块翻译",
+  page_sections: "服务板块",
+  page_sections_translations: "服务板块翻译",
 };
 
 const expectedMenuGroups = {
@@ -145,8 +180,15 @@ const expectedCollectionMenu = {
   product_translations: { group: "product_management", hidden: true, sort: 8 },
   news: { group: "content_management", hidden: false, sort: 1 },
   news_translations: { group: "content_management", hidden: true, sort: 2 },
+  site_pages: { group: "content_management", hidden: false, sort: 3 },
+  site_pages_translations: { group: "content_management", hidden: true, sort: 4 },
+  page_sections: { group: "content_management", hidden: false, sort: 5 },
+  page_sections_translations: { group: "content_management", hidden: true, sort: 6 },
+  home_blocks: { group: "content_management", hidden: false, sort: 7 },
+  home_blocks_translations: { group: "content_management", hidden: true, sort: 8 },
   site_settings: { group: "site_configuration", hidden: false, sort: 1 },
   languages: { group: "site_configuration", hidden: false, sort: 2 },
+  social_links: { group: "site_configuration", hidden: false, sort: 3 },
 };
 
 const expectedChecks = Object.keys(expectedNotes).length
@@ -180,6 +222,7 @@ for (const [key, interfaceName] of Object.entries({
   "media.file_id": "file",
   "category.image": "product-media-editor",
   "product_media.file_id": "product-media-editor",
+  "page_sections.image": "product-media-editor",
 })) {
   const [collection, field] = key.split(".");
   const payload = await get(`/fields/${collection}/${field}`);

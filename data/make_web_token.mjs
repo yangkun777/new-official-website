@@ -68,6 +68,13 @@ const business = [
   "directus_files",
   "media",
   "product_media",
+  "site_pages",
+  "site_pages_translations",
+  "social_links",
+  "home_blocks",
+  "home_blocks_translations",
+  "page_sections",
+  "page_sections_translations",
 ];
 const perms = await req("GET", `/permissions?limit=-1&filter[policy][_eq]=${policy.id}`, {
   token: admin,

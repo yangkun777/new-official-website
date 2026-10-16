@@ -137,10 +137,10 @@ INSERT INTO news_translations (language, news_id, name, slug, short_description,
  'DEGSON introduces a new generation of PCB terminal blocks for more applications.',
  '<p>DEGSON today announced a new generation of PCB terminal blocks with improved current capacity, reliability and ease of installation for industrial control and power electronics.</p><p>The series supports multiple poles and pitch options to meet diverse customer requirements.</p>'),
 ('zh', 1,
- '德昌发布新一代接线端子',
+ '高松发布新一代接线端子',
  'degson-xin-yidai-jie-xian-duan-zi',
- '德昌电子推出新一代 PCB 接线端子系列，覆盖更多应用场景。',
- '<p>德昌电子今日正式发布新一代 PCB 接线端子系列。新产品在载流能力、可靠性与安装便捷性上全面升级，广泛适用于工业控制、电力电子等领域。</p><p>本次发布的产品支持多种极数与节距选择，可满足不同客户的定制需求。</p>');
+ '高松电子推出新一代 PCB 接线端子系列，覆盖更多应用场景。',
+ '<p>高松电子今日正式发布新一代 PCB 接线端子系列。新产品在载流能力、可靠性与安装便捷性上全面升级，广泛适用于工业控制、电力电子等领域。</p><p>本次发布的产品支持多种极数与节距选择，可满足不同客户的定制需求。</p>');
 
 -- ============================================================================
 -- ⑧ site_settings（单例）

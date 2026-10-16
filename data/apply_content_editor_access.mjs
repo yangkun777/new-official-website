@@ -16,6 +16,14 @@ const BUSINESS_COLLECTIONS = [
   "product_translations",
   "news",
   "news_translations",
+  "site_pages",
+  "site_pages_translations",
+  "home_blocks",
+  "home_blocks_translations",
+  "page_sections",
+  "page_sections_translations",
+  "social_links",
+  "site_settings",
 ];
 const BUSINESS_FIELD_ALLOWLISTS = {
   category: ["id", "level", "parent_id", "image", "sort", "status", "translations"],
@@ -41,6 +49,38 @@ const BUSINESS_FIELD_ALLOWLISTS = {
     "id", "language", "news_id", "name", "slug", "seo_title",
     "seo_description", "h1", "short_description", "description",
   ],
+  site_pages: [
+    "id", "slug", "status", "sort", "cover_image",
+    "panel_image_1", "panel_image_2", "panel_image_3", "translations", "list_title",
+  ],
+  site_pages_translations: [
+    "id", "language", "site_pages_id", "title", "summary", "body",
+    "seo_title", "seo_description",
+    "panel_1_title", "panel_1_text", "panel_2_title", "panel_2_text",
+    "panel_3_title", "panel_3_text",
+  ],
+  home_blocks: [
+    "id", "key", "label", "kind", "image", "link_path", "sort", "status", "translations",
+  ],
+  home_blocks_translations: [
+    "id", "language", "home_blocks_id", "title", "text", "cta",
+  ],
+  page_sections: [
+    "id", "page_slug", "parent_id", "list_title", "sort", "status", "image",
+    "translations", "children",
+  ],
+  page_sections_translations: [
+    "id", "language", "page_sections_id", "title", "intro",
+    "stat1", "stat1_label", "stat2", "stat2_label", "intro1", "intro2",
+  ],
+  social_links: ["id", "platform", "label", "url", "sort", "status"],
+  site_settings: [
+    "id", "site_name", "site_description", "site_description_zh",
+    "hero_title", "hero_subtitle", "hero_title_zh", "hero_subtitle_zh",
+    "footer_text", "footer_text_zh", "contact_email",
+    "hero_image", "hero_kicker", "hero_kicker_zh",
+    "cta_title", "cta_title_zh", "cta_text", "cta_text_zh", "cta_link",
+  ],
 };
 const DIRECTUS_FILES_READ_FIELDS = [
   "id", "storage", "filename_disk", "filename_download", "title", "type",
@@ -50,13 +90,18 @@ const DIRECTUS_FILES_CREATE_FIELDS = [
   "storage", "filename_disk", "filename_download", "title", "type",
 ];
 const DESIRED_PERMISSIONS = [
-  ...BUSINESS_COLLECTIONS.flatMap((collection) =>
+  ...BUSINESS_COLLECTIONS.filter((collection) => collection !== "site_settings").flatMap((collection) =>
     ["read", "create", "update"].map((action) => ({
       collection,
       action,
       fields: BUSINESS_FIELD_ALLOWLISTS[collection],
     })),
   ),
+  ...["read", "update"].map((action) => ({
+    collection: "site_settings",
+    action,
+    fields: BUSINESS_FIELD_ALLOWLISTS.site_settings,
+  })),
   { collection: "directus_files", action: "read", fields: DIRECTUS_FILES_READ_FIELDS },
   { collection: "directus_files", action: "create", fields: DIRECTUS_FILES_CREATE_FIELDS },
 ];

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import "../globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { getSiteSettings } from "@/lib/repo";
+import { getSiteSettings, getSocialLinks, localizeSiteCopy } from "@/lib/repo";
 import { LANGS, htmlLang, isLang, type Lang } from "@/lib/lang";
 import { SITE_ORIGIN, siteUrl } from "@/lib/site";
 import { serializeJsonLd } from "@/lib/seo";
@@ -58,12 +58,14 @@ export default async function LangLayout({
   if (!isLang(raw)) notFound();
   const lang: Lang = raw;
 
-  const settings = await getSiteSettings();
-  const siteName = settings?.site_name ?? "DEGSON";
-  const siteDescription =
-    settings?.site_description ??
-    "DEGSON industrial connection solutions — terminal blocks and connectors.";
-  const footerText = settings?.footer_text ?? "© DEGSON. All rights reserved.";
+  const [settings, social] = await Promise.all([
+    getSiteSettings(),
+    getSocialLinks(),
+  ]);
+  const copy = localizeSiteCopy(settings, lang);
+  const siteName = copy.siteName;
+  const siteDescription = copy.siteDescription ?? "";
+  const footerText = copy.footerText;
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -101,7 +103,7 @@ export default async function LangLayout({
       <body className="flex min-h-full flex-col bg-white text-slate-900">
         <SiteHeader siteName={siteName} lang={lang} />
         <main className="flex-1">{children}</main>
-        <SiteFooter text={footerText} />
+        <SiteFooter text={footerText} social={social} />
       </body>
     </html>
   );

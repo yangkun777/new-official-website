@@ -5,6 +5,9 @@ export const CONTENT_TAGS = {
   product: "content:product",
   news: "content:news",
   media: "content:media",
+  pages: "content:site-pages",
+  social: "content:social-links",
+  home: "content:home-blocks",
 } as const;
 
 type PublicCollection = keyof typeof COLLECTION_TAGS;
@@ -16,6 +19,12 @@ const COLLECTION_TAGS = {
   series: CONTENT_TAGS.series,
   product: CONTENT_TAGS.product,
   news: CONTENT_TAGS.news,
+  site_pages: CONTENT_TAGS.pages,
+  page_sections: CONTENT_TAGS.pages,
+  page_sections_translations: CONTENT_TAGS.pages,
+  social_links: CONTENT_TAGS.social,
+  home_blocks: CONTENT_TAGS.home,
+  home_blocks_translations: CONTENT_TAGS.home,
 } as const;
 
 export function tagForCollection(collection: string): ContentTag {

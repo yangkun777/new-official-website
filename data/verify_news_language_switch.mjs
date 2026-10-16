@@ -16,7 +16,7 @@ if (!targetLink) {
 } else {
   const target = await fetch(`${BASE}${targetPath}`, { redirect: "manual" });
   const targetHtml = await target.text();
-  const hasChineseTitle = targetHtml.includes("德昌发布新一代接线端子");
+  const hasChineseTitle = targetHtml.includes("高松发布新一代接线端子");
   if (target.status !== 200 || !hasChineseTitle) {
     console.error(`FAIL Chinese detail page: status=${target.status}, title=${hasChineseTitle}`);
     process.exitCode = 1;

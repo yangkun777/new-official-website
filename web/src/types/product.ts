@@ -7,10 +7,36 @@ export interface SiteSettings {
   id: number;
   site_name: string;
   site_description: string | null;
+  site_description_zh?: string | null;
   hero_title: string | null;
   hero_subtitle: string | null;
+  hero_title_zh?: string | null;
+  hero_subtitle_zh?: string | null;
   footer_text: string | null;
+  footer_text_zh?: string | null;
   contact_email: string | null;
+  hero_image?: string | null;
+  hero_kicker?: string | null;
+  hero_kicker_zh?: string | null;
+  cta_title?: string | null;
+  cta_title_zh?: string | null;
+  cta_text?: string | null;
+  cta_text_zh?: string | null;
+  cta_link?: string | null;
+}
+
+/** 按语言拍平后的站点文案（Hero / 页脚等） */
+export interface LocalizedSiteCopy {
+  siteName: string;
+  siteDescription: string | null;
+  heroTitle: string;
+  heroSubtitle: string;
+  heroKicker: string;
+  heroImage: string | null;
+  footerText: string;
+  ctaTitle: string;
+  ctaText: string;
+  ctaLink: string;
 }
 
 /** 面包屑用的轻量节点（name/slug 已按语言解析） */

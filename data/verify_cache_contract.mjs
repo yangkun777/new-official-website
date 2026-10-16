@@ -6,6 +6,8 @@ assert.equal(tagForCollection("category"), CONTENT_TAGS.category);
 assert.equal(tagForCollection("series"), CONTENT_TAGS.series);
 assert.equal(tagForCollection("product"), CONTENT_TAGS.product);
 assert.equal(tagForCollection("news"), CONTENT_TAGS.news);
+assert.equal(tagForCollection("page_sections"), CONTENT_TAGS.pages);
+assert.equal(tagForCollection("page_sections_translations"), CONTENT_TAGS.pages);
 assert.throws(() => tagForCollection("internal_audit"), /Unknown public collection/);
 
 console.log("PASS cache tag contract");

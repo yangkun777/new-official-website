@@ -15,6 +15,7 @@ import type {
   SeriesListItem,
   SubCategoryCard,
   SiteSettings,
+  LocalizedSiteCopy,
   Variant,
   ProductDetail,
   ProductMedia,
@@ -150,6 +151,399 @@ export function getSiteSettings(): Promise<SiteSettings | null> {
   );
 }
 
+/** site_settings 主表存英文，中文在 *_zh 字段；前台按语言选用。 */
+export function localizeSiteCopy(
+  settings: SiteSettings | null,
+  lang: Lang,
+): LocalizedSiteCopy {
+  const isZh = lang === "zh";
+  return {
+    siteName: settings?.site_name ?? "DEGSON",
+    siteDescription: isZh
+      ? settings?.site_description_zh ??
+        settings?.site_description ??
+        "高松工业连接解决方案，包括接线端子、连接器和工业组件。"
+      : settings?.site_description ??
+        "DEGSON industrial connection solutions — terminal blocks and connectors.",
+    heroTitle: isZh
+      ? settings?.hero_title_zh ?? "以可靠连接赢得信赖"
+      : settings?.hero_title ?? "Connect with confidence",
+    heroSubtitle: isZh
+      ? settings?.hero_subtitle_zh ?? "接线端子、连接器与工业组件"
+      : settings?.hero_subtitle ??
+        "Terminal blocks, connectors and industrial components",
+    heroKicker: isZh
+      ? settings?.hero_kicker_zh ?? "工业连接解决方案"
+      : settings?.hero_kicker ?? "Industrial Connectivity",
+    heroImage: resolveMediaUrl(settings?.hero_image) ?? "/images/marketing/home-hero.jpg",
+    footerText: isZh
+      ? settings?.footer_text_zh ?? "© 高松 DEGSON 保留所有权利。"
+      : settings?.footer_text ?? "© DEGSON. All rights reserved.",
+    ctaTitle: isZh
+      ? settings?.cta_title_zh ?? "需要选型支持？"
+      : settings?.cta_title ?? "Need selection support?",
+    ctaText: isZh
+      ? settings?.cta_text_zh ??
+        "告诉我们应用场景与额定参数，应用团队可协助缩小系列范围。"
+      : settings?.cta_text ??
+        "Tell us your application and ratings — our application team can help shortlist series.",
+    ctaLink: settings?.cta_link || "/services",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 营销页 / 社交外链（后台可配置）
+// ---------------------------------------------------------------------------
+
+export type SitePageSlug = "solutions" | "services" | "about";
+
+export interface SitePageView {
+  slug: SitePageSlug;
+  title: string;
+  summary: string | null;
+  body: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  coverImage: string | null;
+  panels: Array<{ image: string | null; title: string; text: string }>;
+  lang: Lang;
+  availableLangs: Lang[];
+}
+
+interface RawSitePageTranslation {
+  id: number;
+  language: string;
+  title: string | null;
+  summary: string | null;
+  body: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  panel_1_title?: string | null;
+  panel_1_text?: string | null;
+  panel_2_title?: string | null;
+  panel_2_text?: string | null;
+  panel_3_title?: string | null;
+  panel_3_text?: string | null;
+}
+
+interface RawSitePage {
+  id: number;
+  slug: string;
+  status?: string;
+  sort?: number;
+  cover_image?: string | null;
+  panel_image_1?: string | null;
+  panel_image_2?: string | null;
+  panel_image_3?: string | null;
+  translations?: RawSitePageTranslation[];
+}
+
+export async function getSitePage(
+  slug: SitePageSlug,
+  lang: Lang,
+): Promise<SitePageView | null> {
+  try {
+    const rows = await apiGet<RawSitePage[]>(
+      "/items/site_pages",
+      {
+        "filter[slug][_eq]": slug,
+        "filter[status][_eq]": "published",
+        fields:
+          "id,slug,status,cover_image,panel_image_1,panel_image_2,panel_image_3,translations.*",
+        limit: "1",
+      },
+      CONTENT_TAGS.pages,
+    );
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if (!row) return null;
+    const picked = pickTranslation(row.translations, lang);
+    if (!picked) return null;
+    const t = picked.row;
+    const panels = [
+      {
+        image: resolveMediaUrl(row.panel_image_1),
+        title: t.panel_1_title ?? "",
+        text: t.panel_1_text ?? "",
+      },
+      {
+        image: resolveMediaUrl(row.panel_image_2),
+        title: t.panel_2_title ?? "",
+        text: t.panel_2_text ?? "",
+      },
+      {
+        image: resolveMediaUrl(row.panel_image_3),
+        title: t.panel_3_title ?? "",
+        text: t.panel_3_text ?? "",
+      },
+    ].filter((p) => p.title || p.text || p.image);
+    return {
+      slug,
+      title: t.title ?? slug,
+      summary: t.summary,
+      body: t.body,
+      seo_title: t.seo_title,
+      seo_description: t.seo_description,
+      coverImage: resolveMediaUrl(row.cover_image),
+      panels,
+      lang: t.language as Lang,
+      availableLangs: langsOf(row.translations as TranslationRow[]),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export interface PageSectionView {
+  id: number;
+  code: string | null;
+  listTitle: string;
+  title: string;
+  intro: string | null;
+  stat1: string | null;
+  stat1Label: string | null;
+  stat2: string | null;
+  stat2Label: string | null;
+  intro1: string | null;
+  intro2: string | null;
+  image: string | null;
+  children: PageSectionView[];
+}
+
+interface RawPageSectionTranslation {
+  language: string;
+  title?: string | null;
+  intro?: string | null;
+  stat1?: string | null;
+  stat1_label?: string | null;
+  stat2?: string | null;
+  stat2_label?: string | null;
+  intro1?: string | null;
+  intro2?: string | null;
+}
+
+interface RawPageSection {
+  id: number;
+  code?: string | null;
+  page_slug?: string;
+  parent_id?: number | { id: number } | null;
+  list_title?: string | null;
+  sort?: number;
+  status?: string;
+  image?: string | null;
+  translations?: RawPageSectionTranslation[];
+}
+
+function parentIdOf(row: RawPageSection): number | null {
+  if (row.parent_id == null) return null;
+  return typeof row.parent_id === "object" ? row.parent_id.id : row.parent_id;
+}
+
+function toSectionView(row: RawPageSection, lang: Lang): PageSectionView | null {
+  const picked = pickTranslation(row.translations as TranslationRow[] | undefined, lang);
+  if (!picked) return null;
+  const t = picked.row as RawPageSectionTranslation;
+  return {
+    id: row.id,
+    code: row.code ?? null,
+    listTitle: row.list_title || t.title || "",
+    title: t.title || row.list_title || "",
+    intro: t.intro ?? null,
+    stat1: t.stat1 ?? null,
+    stat1Label: t.stat1_label ?? null,
+    stat2: t.stat2 ?? null,
+    stat2Label: t.stat2_label ?? null,
+    intro1: t.intro1 ?? null,
+    intro2: t.intro2 ?? null,
+    image: resolveMediaUrl(row.image),
+    children: [],
+  };
+}
+
+export async function getPageSections(
+  pageSlug: SitePageSlug,
+  lang: Lang,
+): Promise<PageSectionView[]> {
+  try {
+    const rows = await apiGet<RawPageSection[]>(
+      "/items/page_sections",
+      {
+        "filter[page_slug][_eq]": pageSlug,
+        "filter[status][_eq]": "published",
+        fields:
+          "id,code,page_slug,parent_id,list_title,sort,status,image,translations.*",
+        sort: "sort,id",
+        limit: "-1",
+      },
+      CONTENT_TAGS.pages,
+    );
+    const list = Array.isArray(rows) ? rows : [];
+    const views = new Map<number, PageSectionView>();
+    for (const row of list) {
+      const view = toSectionView(row, lang);
+      if (view) views.set(row.id, view);
+    }
+    const roots: PageSectionView[] = [];
+    for (const row of list) {
+      const view = views.get(row.id);
+      if (!view) continue;
+      const parentId = parentIdOf(row);
+      const parent = parentId != null ? views.get(parentId) : null;
+      if (parent) parent.children.push(view);
+      else roots.push(view);
+    }
+    return roots;
+  } catch {
+    return [];
+  }
+}
+
+export async function getSitePageCards(lang: Lang): Promise<
+  Array<{
+    slug: SitePageSlug;
+    title: string;
+    summary: string | null;
+    coverImage: string | null;
+  }>
+> {
+  const slugs: SitePageSlug[] = ["solutions", "services", "about"];
+  const pages = await Promise.all(slugs.map((s) => getSitePage(s, lang)));
+  return pages
+    .filter((p): p is SitePageView => !!p)
+    .map((p) => ({
+      slug: p.slug,
+      title: p.title,
+      summary: p.summary,
+      coverImage: p.coverImage,
+    }));
+}
+
+export type SocialPlatform = "twitter" | "linkedin" | "youtube" | "facebook";
+
+export interface SocialLinkView {
+  platform: SocialPlatform;
+  url: string;
+  label: string | null;
+}
+
+const SOCIAL_PLATFORMS = new Set<SocialPlatform>([
+  "twitter",
+  "linkedin",
+  "youtube",
+  "facebook",
+]);
+
+export async function getSocialLinks(): Promise<SocialLinkView[]> {
+  try {
+    const rows = await apiGet<
+      Array<{ platform: string; url: string | null; label: string | null; sort?: number; status?: string }>
+    >(
+      "/items/social_links",
+      {
+        "filter[status][_eq]": "published",
+        sort: "sort",
+        fields: "platform,url,label,sort,status",
+        limit: "10",
+      },
+      CONTENT_TAGS.social,
+    );
+    const list = Array.isArray(rows) ? rows : [];
+    return list
+      .filter(
+        (r) =>
+          r.url &&
+          SOCIAL_PLATFORMS.has(r.platform as SocialPlatform),
+      )
+      .map((r) => ({
+        platform: r.platform as SocialPlatform,
+        url: r.url as string,
+        label: r.label,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export type HomeBlockKind =
+  | "highlight"
+  | "industry"
+  | "feature"
+  | "product_shot"
+  | "hero_thumb";
+
+export interface HomeBlockView {
+  key: string;
+  kind: HomeBlockKind;
+  title: string;
+  text: string | null;
+  cta: string | null;
+  image: string | null;
+  href: string;
+}
+
+const HOME_KINDS = new Set<HomeBlockKind>([
+  "highlight",
+  "industry",
+  "feature",
+  "product_shot",
+  "hero_thumb",
+]);
+
+const HOME_LINKS = new Set([
+  "/#products",
+  "/solutions",
+  "/services",
+  "/about",
+  "/news",
+]);
+
+interface RawHomeBlock {
+  key: string;
+  kind: string;
+  image?: string | null;
+  link_path?: string | null;
+  sort?: number;
+  translations?: Array<{
+    language: string;
+    title?: string | null;
+    text?: string | null;
+    cta?: string | null;
+  }>;
+}
+
+export async function getHomeBlocks(lang: Lang): Promise<HomeBlockView[]> {
+  try {
+    const rows = await apiGet<RawHomeBlock[]>(
+      "/items/home_blocks",
+      {
+        "filter[status][_eq]": "published",
+        sort: "sort",
+        fields: "key,kind,image,link_path,sort,translations.language,translations.title,translations.text,translations.cta",
+        limit: "50",
+      },
+      CONTENT_TAGS.home,
+    );
+    const list = Array.isArray(rows) ? rows : [];
+    return list
+      .filter((r) => HOME_KINDS.has(r.kind as HomeBlockKind))
+      .map((r) => {
+        const t = pickTranslation(r.translations as TranslationRow[] | undefined, lang);
+        const href = r.link_path && HOME_LINKS.has(r.link_path) ? r.link_path : "/solutions";
+        return {
+          key: r.key,
+          kind: r.kind as HomeBlockKind,
+          title: t?.row.title ?? "",
+          text: t?.row.text ?? null,
+          cta: t?.row.cta ?? null,
+          image: resolveMediaUrl(r.image),
+          href,
+        };
+      })
+      .filter((r) => r.title || r.image);
+  } catch {
+    return [];
+  }
+}
+
 // ---------------------------------------------------------------------------
 // 分类
 // ---------------------------------------------------------------------------
@@ -161,7 +555,7 @@ function toSubCard(node: RawCatNode, lang: Lang): SubCategoryCard | null {
     id: node.id,
     name: t.row.name ?? "",
     slug: t.row.slug ?? "",
-    image: node.image,
+    image: resolveMediaUrl(node.image),
     description: t.row.short_description ?? t.row.description ?? null,
     lang: t.row.language as Lang,
     fallback: t.isFallback,
