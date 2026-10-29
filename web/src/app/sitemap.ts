@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
-import { getCategoriesForSitemap, getNewsForSitemap, getSeriesForSitemap } from "@/lib/repo";
+import { getCategoriesForSitemap, getNewsForSitemap, getProductsForSitemap, getSeriesForSitemap } from "@/lib/repo";
 import { LANGS, type Lang } from "@/lib/lang";
 import { siteUrl } from "@/lib/site";
+import { categoryPublicPath, seriesPublicPath } from "@/lib/productPaths";
 
 export const revalidate = 300;
 
@@ -56,10 +57,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           categoryPages.push(result.items);
         }
         for (const category of categoryPages.flat()) {
-          if (category.slug) {
+          const path = categoryPublicPath(category.categoryPath);
+          if (path) {
             addUnique(
               entries,
-              siteUrl(category.lang as Lang, `/product/category/${category.slug}`),
+              siteUrl(category.lang as Lang, path),
               category.updated_at
             );
           }
@@ -77,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (series.matecode) {
           addUnique(
             entries,
-            siteUrl(series.lang, `/product/series/${series.matecode}`),
+            siteUrl(series.lang, seriesPublicPath(series)),
             series.updated_at
           );
         }
@@ -88,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           if (series.matecode) {
             addUnique(
               entries,
-              siteUrl(series.lang, `/product/series/${series.matecode}`),
+              siteUrl(series.lang, seriesPublicPath(series)),
               series.updated_at
             );
           }
@@ -96,6 +98,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     } catch {
       // Keep the already collected URL classes if the CMS is temporarily unavailable.
+    }
+
+    try {
+      const limit = 100;
+      const first = await getProductsForSitemap(lang, 1, limit);
+      const pages = Math.max(1, Math.ceil(first.total / limit));
+      for (const product of first.items) addUnique(entries, siteUrl(product.lang, product.path), product.updated_at);
+      for (let page = 2; page <= pages; page++) {
+        const result = await getProductsForSitemap(lang, page, limit);
+        for (const product of result.items) addUnique(entries, siteUrl(product.lang, product.path), product.updated_at);
+      }
+    } catch {
+      // Keep category and series URLs even if SKU data is temporarily unavailable.
     }
   }
   return entries;

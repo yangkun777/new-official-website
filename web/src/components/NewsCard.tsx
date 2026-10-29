@@ -2,7 +2,7 @@ import Link from "next/link";
 import ProductImage from "./ProductImage";
 import type { NewsListItem } from "@/types/news";
 import type { Lang } from "@/lib/lang";
-import { siteUrl } from "@/lib/site";
+import { siteHref } from "@/lib/site";
 
 export default function NewsCard({
   news,
@@ -11,11 +11,15 @@ export default function NewsCard({
   news: NewsListItem;
   pageLang: Lang;
 }) {
-  return (
-    <Link
-      href={siteUrl(news.lang, `/news/${news.slug}`)}
-      className="group block overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-[#003f88]/30 hover:shadow-lg"
-    >
+  const href = news.slug
+    ? siteHref(news.lang, `/news/${news.slug}`)
+    : null;
+
+  const className =
+    "group block overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-lg";
+
+  const inner = (
+    <>
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-50">
         <ProductImage
           src={news.cover_image ?? ""}
@@ -36,7 +40,7 @@ export default function NewsCard({
         {news.publish_date ? (
           <p className="text-xs text-slate-400">{news.publish_date}</p>
         ) : null}
-        <h2 className="mt-1 text-lg font-semibold text-slate-900 group-hover:text-[#003f88]">
+        <h2 className="mt-1 text-lg font-semibold text-slate-900 group-hover:text-brand">
           {news.title}
         </h2>
         {news.summary ? (
@@ -45,6 +49,16 @@ export default function NewsCard({
           </p>
         ) : null}
       </div>
+    </>
+  );
+
+  if (!href) {
+    return <div className={className}>{inner}</div>;
+  }
+
+  return (
+    <Link href={href} className={className}>
+      {inner}
     </Link>
   );
 }

@@ -273,8 +273,13 @@ async function main() {
       field: "translations",
       type: "alias",
       meta: {
-        interface: "translations",
-        special: ["translations"],
+        interface: "list-o2m",
+        special: ["o2m"],
+        options: {
+          enableCreate: true,
+          enableSelect: false,
+          template: "{{language}} · {{title}}",
+        },
         translations: [{ language: "zh-CN", translation: "多语言内容" }],
       },
     });

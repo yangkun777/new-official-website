@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Allows isolated verification builds without touching the running demo's .next output.
+  distDir: process.env.DEGSON_NEXT_DIST_DIR || ".next",
+  // Keep the small demo's routes compiled during presentation browsing.
+  // The default idle eviction causes long recompiles when revisiting pages.
+  onDemandEntries: {
+    maxInactiveAge: 60 * 60 * 1000,
+    pagesBufferLength: 12,
+  },
   /**
    * 关闭「流式 metadata」（Next 15 默认开启）。
    *

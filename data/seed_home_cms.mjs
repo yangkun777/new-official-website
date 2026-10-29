@@ -433,16 +433,26 @@ async function main() {
       field: "translations",
       type: "alias",
       meta: {
-        interface: "translations",
-        special: ["translations"],
+        interface: "list-o2m",
+        special: ["o2m"],
+        options: {
+          enableCreate: true,
+          enableSelect: false,
+          template: "{{language}} · {{title}}",
+        },
         translations: [{ language: "zh-CN", translation: "多语言内容" }],
       },
     });
   } else {
     await api("PATCH", "/fields/home_blocks/translations", token, {
       meta: {
-        interface: "translations",
-        special: ["translations"],
+        interface: "list-o2m",
+        special: ["o2m"],
+        options: {
+          enableCreate: true,
+          enableSelect: false,
+          template: "{{language}} · {{title}}",
+        },
         translations: [{ language: "zh-CN", translation: "多语言内容" }],
       },
     });
@@ -531,6 +541,8 @@ async function main() {
     interface: "select-dropdown",
     options: {
       choices: [
+        { text: "首页（/）", value: "home" },
+        { text: "新闻列表（/news）", value: "news" },
         { text: "行业解决方案（/solutions）", value: "solutions" },
         { text: "服务（/services）", value: "services" },
         { text: "关于我们（/about）", value: "about" },
@@ -541,6 +553,7 @@ async function main() {
   });
   await ensureField(token, "site_pages", "cover_image", "string", { max_length: 512 }, {
     ...IMAGE_META,
+    note: "各语言共用页头图。某语言要换图，填翻译行里的「本语言封面图」。",
     translations: [{ language: "zh-CN", translation: "页头封面图" }],
   });
   await ensureField(token, "site_pages", "panel_image_1", "string", { max_length: 512 }, {
@@ -569,9 +582,15 @@ async function main() {
     ["language", "语言", { interface: "select-dropdown", options: { choices: LANG_CHOICES } }],
     ["title", "页面标题", { interface: "input" }],
     ["summary", "摘要（页头副标题）", { interface: "input-multiline" }],
-    ["body", "正文", { interface: "input-rich-text-html", note: "前台会按段落展示；请用普通段落文字" }],
-    ["seo_title", "SEO 标题", { interface: "input" }],
-    ["seo_description", "SEO 描述", { interface: "input-multiline" }],
+    ["body", "正文", { interface: "input-rich-text-html", note: "页面正文，前台按富文本展示。可用标题、列表、链接和图片。" }],
+    ["cover_image", "本语言封面图", { interface: "product-media-editor", note: "本语言页头图。留空则用页面上的共用封面。" }],
+    ["panel_1_image", "本语言图文 1 图片", { interface: "product-media-editor", note: "本语言图文卡图片。留空则用页面上对应的共用图。" }],
+    ["panel_2_image", "本语言图文 2 图片", { interface: "product-media-editor", note: "本语言图文卡图片。留空则用页面上对应的共用图。" }],
+    ["panel_3_image", "本语言图文 3 图片", { interface: "product-media-editor", note: "本语言图文卡图片。留空则用页面上对应的共用图。" }],
+    ["seo_title", "SEO 标题", { interface: "input", note: "浏览器标题。可留空则前台用页面标题。已写 DEGSON/高松 时前台不再追加；否则自动加「| DEGSON」。" }],
+    ["seo_description", "SEO 描述", { interface: "input-multiline", note: "搜索结果摘要。可留空则前台用简介或标题。" }],
+    ["h1", "页面 H1", { interface: "input", note: "页面主标题 H1。可留空则前台用名称/标题。" }],
+    ["seo_keywords", "SEO 关键词", { interface: "input", note: "关键词，用逗号分隔。可留空。Schema 由前台按页型自动输出。" }],
     ["panel_1_title", "图文板块 1 标题", { interface: "input" }],
     ["panel_1_text", "图文板块 1 说明", { interface: "input-multiline" }],
     ["panel_2_title", "图文板块 2 标题", { interface: "input" }],
@@ -579,7 +598,7 @@ async function main() {
     ["panel_3_title", "图文板块 3 标题", { interface: "input" }],
     ["panel_3_text", "图文板块 3 说明", { interface: "input-multiline" }],
   ]) {
-    await ensureField(token, "site_pages_translations", field, field.includes("text") || field === "body" || field === "summary" || field === "seo_description" ? "text" : "string", {}, {
+    await ensureField(token, "site_pages_translations", field, field.includes("text") || field === "body" || field === "summary" || field === "seo_description" ? "text" : "string", field.endsWith("_image") ? { max_length: 512 } : {}, {
       translations: [{ language: "zh-CN", translation: label }],
       ...extra,
     });

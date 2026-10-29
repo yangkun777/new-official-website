@@ -1,45 +1,19 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import ServicesPageView from "@/components/ServicesPage";
-import { getPageSections, getSitePage } from "@/lib/repo";
+import ServicesDemo from "@/components/ServicesDemo";
 import { toLang } from "@/lib/lang";
-import { hreflangMap, siteUrl } from "@/lib/site";
-import { socialMetadata } from "@/lib/seo";
+import { cmsPageMetadata, webPageJsonLd } from "@/lib/pageGeo";
+import { siteUrl } from "@/lib/site";
+import { serializeJsonLd } from "@/lib/seo";
 
-export const revalidate = 60;
-
-interface PageProps {
-  params: Promise<{ lang: string }>;
-}
+interface PageProps { params: Promise<{ lang: string }> }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const lang = toLang((await params).lang);
-  const page = await getSitePage("services", lang);
-  if (!page) return { title: "Services" };
-  const title = page.seo_title || page.title;
-  const description = page.seo_description || page.summary || undefined;
-  return {
-    title,
-    description,
-    ...socialMetadata({ title, description: description ?? "", url: siteUrl(lang, "/services") }),
-    alternates: {
-      canonical: siteUrl(lang, "/services"),
-      languages: hreflangMap("/services", page.availableLangs),
-    },
-  };
+  return cmsPageMetadata({ lang, path: "/services", title: lang === "zh" ? "选型与支持 | 高松 DEGSON" : "Selection and support | DEGSON", description: lang === "zh" ? "了解高松的产品选型与技术支持。" : "Explore DEGSON product selection and technical support." });
 }
 
 export default async function ServicesPage({ params }: PageProps) {
   const lang = toLang((await params).lang);
-  const page = await getSitePage("services", lang);
-  if (!page) notFound();
-  const sections = await getPageSections("services", lang);
-  return (
-    <ServicesPageView
-      title={page.title}
-      summary={page.summary}
-      coverImage={page.coverImage}
-      sections={sections}
-    />
-  );
+  const name = lang === "zh" ? "选型与支持" : "Selection and support";
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(webPageJsonLd({ name, description: name, url: siteUrl(lang, "/services"), lang })) }} /><ServicesDemo lang={lang} /></>;
 }

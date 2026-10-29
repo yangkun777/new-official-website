@@ -1,4 +1,6 @@
+import CmsHtml from "@/components/CmsHtml";
 import ProductImage from "@/components/ProductImage";
+import { serializeJsonLd } from "@/lib/seo";
 
 export interface MarketingPanel {
   image: string | null;
@@ -12,21 +14,24 @@ export default function MarketingPage({
   body,
   coverImage,
   panels = [],
+  jsonLd,
 }: {
   title: string;
   summary?: string | null;
   body?: string | null;
   coverImage?: string | null;
   panels?: MarketingPanel[];
+  jsonLd?: Record<string, unknown>;
 }) {
-  const paragraphs = (body ?? "")
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
   return (
     <article>
-      <section className="relative min-h-[280px] overflow-hidden bg-[#003f88] text-white sm:min-h-[360px]">
+      {jsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+        />
+      ) : null}
+      <section className="relative min-h-[280px] overflow-hidden bg-brand text-white sm:min-h-[360px]">
         {coverImage ? (
           <div className="absolute inset-0">
             <ProductImage
@@ -36,18 +41,18 @@ export default function MarketingPage({
               className="object-cover opacity-45"
               sizes="100vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#003f88]/90 via-[#003f88]/70 to-[#003f88]/40" />
+            <div className="absolute inset-0 bg-gradient-to-r from-brand/90 via-brand/70 to-brand/40" />
           </div>
         ) : null}
         <div className="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-100/90">
+          <p className="text-sm font-semibold uppercase tracking-wider text-brand-fog/90">
             DEGSON
           </p>
           <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">
             {title}
           </h1>
           {summary ? (
-            <p className="mt-5 max-w-2xl text-lg text-blue-50/95">{summary}</p>
+            <p className="mt-5 max-w-2xl text-lg text-brand-mist/95">{summary}</p>
           ) : null}
         </div>
       </section>
@@ -85,13 +90,14 @@ export default function MarketingPage({
       ) : null}
 
       <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="space-y-5 text-base leading-relaxed text-slate-700">
-          {paragraphs.length > 0 ? (
-            paragraphs.map((p, i) => <p key={i}>{p}</p>)
-          ) : (
-            <p className="text-slate-500">暂无正文内容。</p>
-          )}
-        </div>
+        {body ? (
+          <CmsHtml
+            html={body}
+            className="space-y-5 text-base leading-relaxed text-slate-700 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:text-xl [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-brand [&_img]:mt-4 [&_img]:max-w-full"
+          />
+        ) : (
+          <p className="text-slate-500">暂无正文内容。</p>
+        )}
       </section>
     </article>
   );

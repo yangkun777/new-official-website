@@ -58,7 +58,7 @@ cd web; pnpm dev
 
 ```powershell
 curl http://localhost:8055/server/ping
-cd data; node verify_m1_web.mjs    # 期望 PASS 34 / FAIL 0
+cd data; node verify_m1_web.mjs    # 当前 PASS 56 / FAIL 0
 ```
 
 ---
@@ -80,13 +80,14 @@ start-all.ps1 一键启动
 
 | 文档 | 用途 |
 |---|---|
-| [`docs/AI-项目总况.md`](docs/AI-项目总况.md) | **当前真实状态**（Git、试点范围、PRD 差距） |
+| [`docs/AI-项目总况.md`](docs/AI-项目总况.md) | **官网 Demo 当前进度的统一维护入口**（已完成、验证结果、风险、下一步） |
 | [`PROJECT-HANDOFF.md`](PROJECT-HANDOFF.md) | 交接、坑位清单、启动细节 |
 | [`docs/M0.3-底座重建手册.md`](docs/M0.3-底座重建手册.md) | 从零重建 |
 | [`docs/新官网基座优化版PRD_2026-10-08.md`](docs/新官网基座优化版PRD_2026-10-08.md) | 基座加固 PRD |
+| [`docs/DEGSON新官网多语言独立域名与GEO一体化项目PRD-v3.2.md`](docs/DEGSON新官网多语言独立域名与GEO一体化项目PRD-v3.2.md) | **官网需求的统一维护入口**；需求变更更新正文和修订记录 |
 | [`docs/DEGSON新官网项目需求文档-DeepSeek版.md`](docs/DEGSON新官网项目需求文档-DeepSeek版.md) | 需求基线 |
 
-业务侧还有 **PRD v3**（独立语言域名 + 运营导入导出 + 菜单配置）。架构结论：技术栈不用换，要补的是域名层与后台可验收能力——见总况文档。
+业务侧 **PRD v3.2** 覆盖独立语言域名、运营导入导出、菜单配置、第三方登录及逐页 GEO/SEO 配置需求。架构结论：技术栈不用换，要补的是域名层与后台可验收能力——见总况文档。
 
 ---
 

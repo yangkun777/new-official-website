@@ -1,0 +1,57 @@
+import Link from "next/link";
+import ProductImage from "@/components/ProductImage";
+import MediaReveal from "@/components/MediaReveal";
+import ScrollReveal from "@/components/ScrollReveal";
+import AboutCapabilities from "@/components/AboutCapabilities";
+import { siteHref } from "@/lib/site";
+import type { Lang } from "@/lib/lang";
+
+export default function AboutDemo({ lang }: { lang: Lang }) {
+  const zh = lang === "zh";
+  const checks = zh ? [["电气条件", "从额定参数、导线规格到电气间距，结合具体产品逐项核对。"], ["结构与操作", "关注接线、锁定与拆装方式，让接口适应实际操作空间。"], ["环境与安装", "把温度、振动、防护和固定方式纳入应用确认。"], ["资料与追溯", "以完整订货号对应规格、图纸与认证资料，保持信息一致。"]] : [["Electrical conditions", "Check ratings, wire specifications and electrical clearances for the selected product."], ["Structure & operation", "Consider wiring, locking and removal within the available working space."], ["Environment & installation", "Include temperature, vibration, protection and mounting in the review."], ["Documents & identification", "Match specifications, drawings and certificates to the complete order number."]];
+  const industries = zh ? [["工业自动化", "从控制柜延伸至设备末端", "feature-automation.jpg", "automation"], ["新能源", "沿着能源流动建立连接", "feature-energy.jpg", "energy"], ["轨道交通", "兼顾运行与检修需求", "feature-rail.jpg", "rail"]] : [["Industrial automation", "From the cabinet to the machine", "feature-automation.jpg", "automation"], ["New energy", "Connect along the energy path", "feature-energy.jpg", "energy"], ["Rail transport", "Consider operation and maintenance", "feature-rail.jpg", "rail"]];
+  const areas = zh ? [
+    ["产品", "从接线端子到工业连接器，覆盖设备内部与外部的连接需求。", "浏览产品", "/products"],
+    ["应用", "围绕安装环境、连接方式与维护要求寻找合适的产品组合。", "查看应用", "#applications"],
+    ["支持", "让工程团队从初步选型继续走向资料确认与实际应用。", "获取支持", "/services"],
+  ] : [
+    ["Products", "From terminal blocks to industrial connectors, for connections inside and outside the device.", "Browse products", "/products"],
+    ["Applications", "Choose around the installation environment, connection method and maintenance needs.", "Explore applications", "#applications"],
+    ["Support", "Help engineering teams move from selection to documentation and real application.", "Get support", "/services"],
+  ];
+  return <div className="about-demo bg-white text-[#17212b]">
+    <section className="mx-auto max-w-[1280px] px-6 pb-20 pt-16 sm:px-10 lg:px-12 lg:pb-24 lg:pt-24">
+      <ScrollReveal direction="left"><p className="text-[13px] font-semibold text-[#af1728]">{zh ? "关于高松" : "About DEGSON"}</p></ScrollReveal>
+      <div className="mt-6 grid items-end gap-7 lg:grid-cols-[1.35fr_0.65fr] lg:gap-20">
+        <ScrollReveal direction="left"><h1 className="max-w-[12em] text-[clamp(44px,5vw,76px)] font-semibold leading-[1.08] tracking-[-0.045em]">{zh ? "为每一种连接，找到更合适的方式。" : "Built around the way things connect."}</h1></ScrollReveal>
+        <ScrollReveal direction="right" delay={90}><p className="max-w-[520px] pb-1 text-[17px] leading-8 text-[#53606a]">{zh ? "高松专注工业连接产品，让设备、系统与现场之间的电气接口更清晰、更易选型。" : "DEGSON focuses on industrial connectivity, helping teams choose clear electrical interfaces between devices, systems and the field."}</p></ScrollReveal>
+      </div>
+      <MediaReveal direction="right" className="relative mt-12 aspect-[4/3] bg-[#eef1f3] sm:aspect-[16/8] lg:mt-16 lg:aspect-[16/7]"><ProductImage src="/images/marketing/about-company.jpg" alt={zh ? "高松公司园区" : "DEGSON company campus"} priority sizes="(min-width:1280px) 1184px, 100vw" className="object-cover" /></MediaReveal>
+      <div className="grid border-b border-[#dce1e5] md:grid-cols-3">
+        {areas.map(([title, detail, action, href], index) => <ScrollReveal key={title} delay={index * 55} className="h-full"><Link href={href.startsWith("#") ? href : siteHref(lang, href)} className={`about-route-card group relative flex h-full min-h-[210px] flex-col justify-between border-b border-[#dce1e5] py-7 md:border-b-0 md:border-r md:px-7 ${index === 0 ? "md:pl-0" : ""} ${index === areas.length - 1 ? "md:border-r-0" : ""}`}>
+          <span><span className="block text-[23px] font-semibold tracking-[-0.025em] text-[#17212b]">{title}</span><span className="mt-4 block max-w-[320px] text-[13px] leading-7 text-[#68747e]">{detail}</span></span>
+          <span className="mt-6 flex items-center justify-between gap-3 text-[13px] font-semibold text-[#17212b]">{action}<span className="about-route-arrow text-xl text-[#af1728]" aria-hidden="true">↗</span></span>
+        </Link></ScrollReveal>)}
+      </div>
+    </section>
+    <section className="border-y border-[#dce1e5] bg-[#f5f6f7]"><div className="mx-auto grid max-w-[1280px] gap-10 px-6 py-18 sm:px-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-24 lg:px-12 lg:py-24">
+      <p className="text-[13px] font-semibold text-[#af1728]">{zh ? "DEGSON 高松" : "DEGSON"}</p>
+      <p className="text-[clamp(26px,2.6vw,39px)] font-semibold leading-[1.35] tracking-[-0.025em]">{zh ? "连接的价值，不只在产品本身，也在于它能否适应真实的设备与使用环境。" : "The value of a connection lies in how it performs within real equipment and real operating conditions."}</p>
+    </div></section>
+    <section id="company" className="about-company scroll-mt-32 overflow-hidden bg-white"><div className="mx-auto max-w-[1280px] px-6 py-20 sm:px-10 lg:px-12 lg:py-28">
+      <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+        <ScrollReveal direction="left"><div className="about-company-kicker"><span className="text-[13px] font-semibold text-[#af1728]">{zh ? "公司概览" : "Company at a glance"}</span><span className="text-xs tracking-[0.16em] text-[#9ba5ad]">DEGSON / 01</span></div><h2 className="mt-8 max-w-[10em] text-[clamp(34px,3.6vw,54px)] font-semibold leading-[1.18] tracking-[-0.04em]">{zh ? "扎根连接技术，\n面向全球应用。" : "Rooted in connectivity.\nBuilt for global applications."}</h2></ScrollReveal>
+        <ScrollReveal direction="right" delay={70}><p className="max-w-[700px] text-[17px] leading-9 text-[#53606a]">{zh ? "高松创立于 1990 年，围绕工业连接器及相关电气连接产品，持续整合研发、模具加工、自动化制造和测试能力。产品应用覆盖工业自动化、电力、轨道交通与新能源等领域。" : "Founded in 1990, DEGSON develops industrial connectors and related electrical connectivity products, bringing together R&D, mould processing, automated manufacturing and testing. Its products serve applications from industrial automation and power to rail and new energy."}</p><p className="mt-6 max-w-[700px] text-[15px] leading-8 text-[#68747e]">{zh ? "从标准化产品到具体应用，高松的目标是让客户获得更清晰的产品选择、更完整的技术资料，以及与实际需求相匹配的连接方案。" : "From standard products to application-specific needs, the aim is to make product selection, technical information and connection decisions clearer for customers."}</p></ScrollReveal>
+      </div>
+      <div className="about-company-facts mt-16 grid border-t border-[#cfd6db] lg:mt-20 lg:grid-cols-[0.8fr_1.1fr_1.1fr]">
+        <ScrollReveal direction="up" className="about-company-fact"><span className="about-company-fact-index">01 / {zh ? "起点" : "Beginning"}</span><strong className="about-company-fact-value">1990</strong><p>{zh ? "高松创立，持续聚焦工业连接。" : "The year DEGSON was founded."}</p></ScrollReveal>
+        <ScrollReveal direction="up" delay={70} className="about-company-fact"><span className="about-company-fact-index">02 / {zh ? "验证" : "Verification"}</span><strong className="about-company-fact-label">UL-CTDP<br />VDE-TDAP<br />CNAS</strong><p>{zh ? "官网列示的实验室认可与资质。" : "Laboratory approvals and accreditation listed by DEGSON."}</p></ScrollReveal>
+        <ScrollReveal direction="up" delay={140} className="about-company-fact"><span className="about-company-fact-index">03 / {zh ? "应用" : "Applications"}</span><strong className="about-company-fact-label">{zh ? "跨行业 · 多场景" : "Across industries"}</strong><p>{zh ? "连接产品服务于工业自动化、能源、交通等应用。" : "Connectivity products for automation, energy, transport and more."}</p></ScrollReveal>
+      </div>
+    </div></section>
+    <AboutCapabilities lang={lang} />
+    <section className="bg-[#17212b] text-white"><div className="mx-auto grid max-w-[1280px] gap-12 px-6 py-20 sm:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24 lg:px-12 lg:py-28"><ScrollReveal direction="left"><p className="text-[13px] font-semibold text-[#f2a8ae]">{zh ? "对连接的认真，落在细节里" : "Attention to the details"}</p><h2 className="mt-5 max-w-[12em] text-[clamp(32px,3.4vw,50px)] font-semibold leading-tight tracking-[-0.035em]">{zh ? "让每一个连接，\n都有清晰的依据。" : "A clear basis for every connection."}</h2><p className="mt-7 max-w-[360px] text-[15px] leading-8 text-white/60">{zh ? "好的连接需要产品、资料与实际使用条件相互对应。把关键问题逐一确认，让工程判断更具体。" : "Products, documents and operating conditions need to agree. Reviewing the key questions makes engineering decisions more concrete."}</p><Link href={siteHref(lang, "/services")} className="motion-arrow mt-8 inline-flex border-b border-[#f2a8ae] pb-2 text-sm font-semibold">{zh ? "了解工程支持" : "Explore engineering support"}<span className="ml-4" aria-hidden="true">↗</span></Link></ScrollReveal><div className="grid gap-x-9 gap-y-10 sm:grid-cols-2">{checks.map(([title, text], index) => <ScrollReveal key={title} delay={index * 40} className="about-quality border-t border-white/20 pt-6"><span className="about-quality-mark" aria-hidden="true">✓</span><h3 className="mt-5 text-xl font-semibold">{title}</h3><p className="mt-4 text-sm leading-7 text-white/60">{text}</p></ScrollReveal>)}</div></div></section>
+    <section id="applications" className="mx-auto max-w-[1280px] scroll-mt-32 px-6 py-20 sm:px-10 lg:px-12 lg:py-28"><ScrollReveal className="mb-10 flex flex-wrap items-end justify-between gap-6"><div><p className="text-[13px] font-semibold text-[#af1728]">{zh ? "连接不同现场" : "Across applications"}</p><h2 className="mt-4 text-[clamp(32px,3.4vw,50px)] font-semibold leading-tight tracking-[-0.035em]">{zh ? "产品的下一站，是你的应用。" : "The next stop is your application."}</h2></div></ScrollReveal><div className="grid gap-6 md:grid-cols-3">{industries.map(([title, text, image, anchor], index) => <ScrollReveal key={anchor} delay={index * 60}><Link href={siteHref(lang, `/solutions#${anchor}`)} className="about-industry group block h-full border-b border-[#dce1e5] pb-6"><div className="relative aspect-[4/3] overflow-hidden bg-[#eef1f3]"><ProductImage src={`/images/marketing/${image}`} alt="" sizes="(min-width:768px) 33vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]" /></div><h3 className="mt-6 flex items-center justify-between text-[22px] font-semibold">{title}<span aria-hidden="true">↗</span></h3><p className="mt-3 text-sm leading-7 text-[#68747e]">{text}</p></Link></ScrollReveal>)}</div></section>
+    <section className="bg-[#17212b] text-white"><div className="mx-auto grid max-w-[1280px] items-center gap-10 px-6 py-16 sm:px-10 lg:grid-cols-[1fr_1fr] lg:gap-20 lg:px-12 lg:py-20"><MediaReveal direction="left" className="relative aspect-[16/10] bg-white"><ProductImage src="/images/marketing/circular-connectors.jpg" alt={zh ? "高松圆形连接器" : "DEGSON circular connectors"} sizes="(min-width:1024px) 50vw, 100vw" className="object-contain" /></MediaReveal><ScrollReveal direction="right"><div><p className="text-[13px] font-semibold text-[#f2a8ae]">{zh ? "继续了解" : "Explore further"}</p><h2 className="mt-5 text-[clamp(30px,3vw,44px)] font-semibold leading-tight">{zh ? "看看连接技术如何走进不同现场。" : "See connectivity at work across industries."}</h2><Link href={siteHref(lang, "/solutions")} className="motion-arrow mt-8 inline-flex border-b-2 border-[#f2a8ae] pb-2 text-sm font-semibold">{zh ? "探索行业方案" : "Explore solutions"}<span className="ml-2" aria-hidden="true">↗</span></Link></div></ScrollReveal></div></section>
+  </div>;
+}

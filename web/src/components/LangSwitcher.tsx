@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LANGS, type Lang } from "@/lib/lang";
-import { siteUrl } from "@/lib/site";
+import { siteHref } from "@/lib/site";
 
 const LABEL: Record<Lang, string> = { en: "English", zh: "中文" };
 
@@ -14,28 +14,32 @@ export default function LangSwitcher({
   path,
   available = [...LANGS],
   paths,
+  nativeNavigation = false,
 }: {
   lang: Lang;
   path: string;
   available?: Lang[];
   paths?: Partial<Record<Lang, string>>;
+  nativeNavigation?: boolean;
 }) {
   const list = available.includes(lang) ? available : [lang, ...available];
 
   return (
-    <nav aria-label="Language" className="flex items-center gap-3 text-sm">
+    <nav aria-label="Language" className="flex items-center gap-3 text-[13px]">
       {list.map((code, i) => (
         <span key={code} className="flex items-center gap-3">
-          {i > 0 ? <span className="text-slate-300">|</span> : null}
+          {i > 0 ? <span className="text-[#ddd]">|</span> : null}
           {code === lang ? (
-            <span aria-current="true" className="font-semibold text-[#003f88]">
+            <span aria-current="true" className="font-medium text-[#161616]">
               {LABEL[code]}
             </span>
+          ) : nativeNavigation ? (
+            <a href={siteHref(code, paths?.[code] ?? path)} hrefLang={code === "zh" ? "zh-Hans" : code} className="inline-flex min-h-11 items-center text-[#888] hover:text-[#161616]">{LABEL[code]}</a>
           ) : (
             <Link
-              href={siteUrl(code, paths?.[code] ?? path)}
+              href={siteHref(code, paths?.[code] ?? path)}
               hrefLang={code === "zh" ? "zh-Hans" : code}
-              className="text-slate-500 hover:text-[#003f88]"
+              className="text-[#888] hover:text-[#161616]"
             >
               {LABEL[code]}
             </Link>

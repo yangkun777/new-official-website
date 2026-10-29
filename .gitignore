@@ -9,10 +9,14 @@ node_modules/
 
 # ---------- Next.js 生成物 ----------
 .next/
+web/.next-*/
 out/
 build/
 *.tsbuildinfo
 next-env.d.ts
+
+# ---------- 本机临时目录 ----------
+.codex-tmp/
 
 # ---------- 环境与凭据（★ 关键）----------
 # 含数据库密码、Directus SECRET/KEY、管理员密码
@@ -21,6 +25,7 @@ next-env.d.ts
 !.env.example
 !web/.env.example
 cms/.env
+cms/.revalidate-last.json
 web/.env
 web/.env.local
 web/.env.*.local

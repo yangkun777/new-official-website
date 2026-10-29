@@ -50,7 +50,7 @@ export default function SocialIcons({
               rel="noopener noreferrer"
               title={title}
               aria-label={title}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-[#003f88] hover:text-[#003f88]"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand hover:text-brand"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={meta.icon} alt="" width={18} height={18} className="opacity-80" />

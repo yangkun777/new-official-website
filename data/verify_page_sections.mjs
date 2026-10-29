@@ -13,11 +13,15 @@ async function get(path) {
 
 const failures = [];
 const collection = await get("/collections/page_sections");
-if (collection.data?.meta?.translations?.some((t) => t.translation === "服务板块") !== true) {
+if (collection.data?.meta?.translations?.some((t) => t.translation === "页面板块") !== true) {
   failures.push("collection.translation");
 }
 const image = await get("/fields/page_sections/image");
 if (image.data?.meta?.interface !== "product-media-editor") failures.push("image.interface");
+const langImage = await get("/fields/page_sections_translations/image");
+if (langImage.data?.meta?.interface !== "product-media-editor") failures.push("translations.image.interface");
+const intro1 = await get("/fields/page_sections_translations/intro1");
+if (intro1.data?.meta?.interface !== "input-rich-text-html") failures.push("intro1.interface");
 const pageSlug = await get("/fields/page_sections/page_slug");
 if (pageSlug.data?.meta?.interface !== "select-dropdown") failures.push("page_slug.interface");
 const items = await get("/items/page_sections?filter[page_slug][_eq]=services&fields=id,code,parent_id,list_title,status,translations.language,translations.title,translations.stat1&limit=-1");

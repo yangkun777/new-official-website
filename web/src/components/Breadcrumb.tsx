@@ -3,15 +3,15 @@ import type { Crumb } from "@/types/product";
 
 export default function Breadcrumb({ items }: { items: Crumb[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="border-b border-slate-200 bg-slate-50">
-      <ol className="mx-auto flex max-w-7xl flex-wrap items-center gap-1.5 px-4 py-3 text-sm sm:px-6 lg:px-8">
+    <nav aria-label="Breadcrumb" className="border-b border-[#dce1e5] bg-[#f5f6f7]">
+      <ol className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-2 px-6 py-4 text-sm sm:px-10 lg:px-12">
         {items.map((it, i) => {
           const last = i === items.length - 1;
           const isCurrent = it.current || last;
           return (
             <li key={`${it.id}-${i}`} className="flex items-center gap-1.5">
               {i > 0 ? (
-                <span aria-hidden="true" className="text-slate-300">
+                <span aria-hidden="true" className="text-[#a7b0b8]">
                   /
                 </span>
               ) : null}
@@ -19,14 +19,14 @@ export default function Breadcrumb({ items }: { items: Crumb[] }) {
                 <span
                   className={
                     isCurrent
-                      ? "font-semibold text-[#003f88]"
-                      : "text-slate-500"
+                      ? "font-semibold text-[#17212b]"
+                      : "text-[#68747e]"
                   }
                 >
                   {it.title}
                 </span>
               ) : (
-                <Link href={it.href} className="text-slate-500 hover:text-[#003f88]">
+                <Link href={it.href} className="text-[#68747e] hover:text-[#af1728]">
                   {it.title}
                 </Link>
               )}

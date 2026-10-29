@@ -1,45 +1,19 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import MarketingPage from "@/components/MarketingPage";
-import { getSitePage } from "@/lib/repo";
+import AboutDemo from "@/components/AboutDemo";
 import { toLang } from "@/lib/lang";
-import { hreflangMap, siteUrl } from "@/lib/site";
-import { socialMetadata } from "@/lib/seo";
+import { cmsPageMetadata, webPageJsonLd } from "@/lib/pageGeo";
+import { siteUrl } from "@/lib/site";
+import { serializeJsonLd } from "@/lib/seo";
 
-export const revalidate = 60;
-
-interface PageProps {
-  params: Promise<{ lang: string }>;
-}
+interface PageProps { params: Promise<{ lang: string }> }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const lang = toLang((await params).lang);
-  const page = await getSitePage("about", lang);
-  if (!page) return { title: "About" };
-  const title = page.seo_title || page.title;
-  const description = page.seo_description || page.summary || undefined;
-  return {
-    title,
-    description,
-    ...socialMetadata({ title, description: description ?? "", url: siteUrl(lang, "/about") }),
-    alternates: {
-      canonical: siteUrl(lang, "/about"),
-      languages: hreflangMap("/about", page.availableLangs),
-    },
-  };
+  return cmsPageMetadata({ lang, path: "/about", title: lang === "zh" ? "关于高松 | DEGSON" : "About DEGSON", description: lang === "zh" ? "了解高松的工业连接产品、应用方向与选型支持。" : "Learn about DEGSON industrial connectivity, applications and product selection." });
 }
 
 export default async function AboutPage({ params }: PageProps) {
   const lang = toLang((await params).lang);
-  const page = await getSitePage("about", lang);
-  if (!page) notFound();
-  return (
-    <MarketingPage
-      title={page.title}
-      summary={page.summary}
-      body={page.body}
-      coverImage={page.coverImage}
-      panels={page.panels}
-    />
-  );
+  const name = lang === "zh" ? "关于高松" : "About DEGSON";
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(webPageJsonLd({ name, description: name, url: siteUrl(lang, "/about"), lang })) }} /><AboutDemo lang={lang} /></>;
 }

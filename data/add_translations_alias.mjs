@@ -43,10 +43,10 @@ for (const { parent, child, fk } of targets) {
     meta: {
       special: ['o2m'],
       interface: 'list-o2m',
-      options: { template: '{{name}}', enableCreate: true, enableSelect: true },
+      options: { template: '{{language}} · {{name}}', enableCreate: true, enableSelect: false },
       display: 'related-values',
-      display_options: { template: '{{language}} — {{name}}' },
-      note: '翻译行（每语言一行）',
+      display_options: { template: '{{language}} · {{name}}' },
+      note: '还没有内容时请点「新建」，中文、英文各一条。每一行会标明这条是「中文 zh」还是「英文 en」。',
     },
   });
   const created = f.status >= 200 && f.status < 300;

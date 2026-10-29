@@ -1,14 +1,15 @@
-import Link from "next/link";
+import Image from "next/image";
 import HeaderLangSwitcher from "@/components/HeaderLangSwitcher";
-import { siteUrl } from "@/lib/site";
+import SiteNavigation from "@/components/SiteNavigation";
+import { siteHref } from "@/lib/site";
 import type { Lang } from "@/lib/lang";
 
 const NAV: { path: string; en: string; zh: string }[] = [
   { path: "/", en: "Home", zh: "首页" },
-  { path: "/#products", en: "Products", zh: "产品" },
-  { path: "/solutions", en: "Solutions", zh: "行业解决方案" },
+  { path: "/products", en: "Products", zh: "产品" },
+  { path: "/solutions", en: "Solutions", zh: "方案" },
   { path: "/services", en: "Services", zh: "服务" },
-  { path: "/about", en: "About", zh: "关于我们" },
+  { path: "/about", en: "About", zh: "关于" },
   { path: "/news", en: "News", zh: "新闻" },
 ];
 
@@ -19,41 +20,33 @@ export default function SiteHeader({
   siteName?: string;
   lang: Lang;
 }) {
+  const items = NAV.map(n => ({ path: n.path, href: siteHref(lang, n.path), label: lang === "zh" ? n.zh : n.en,
+    children: n.path === "/services" ? [
+      { href: siteHref(lang, "/services"), label: lang === "zh" ? "服务与支持" : "Services & support", description: lang === "zh" ? "选型、资料与工程沟通" : "Selection and engineering support", path: "/services" },
+      { href: siteHref(lang, "/services/faq"), label: lang === "zh" ? "常见问题 FAQ" : "Frequently asked questions", description: lang === "zh" ? "快速查找产品与应用答案" : "Answers about products and applications", path: "/services/faq" },
+    ] : undefined,
+  }));
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href={siteUrl(lang, "/")} className="flex shrink-0 items-center gap-2">
-          <span className="text-lg font-bold tracking-tight text-[#003f88]">
-            {siteName}
-          </span>
-        </Link>
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-4 sm:gap-6">
-          <nav className="hidden items-center gap-4 text-sm md:flex lg:gap-5">
-            {NAV.map((n) => (
-              <Link
-                key={n.path}
-                href={siteUrl(lang, n.path)}
-                className="whitespace-nowrap text-slate-600 hover:text-[#003f88]"
-              >
-                {lang === "zh" ? n.zh : n.en}
-              </Link>
-            ))}
-          </nav>
-          <HeaderLangSwitcher lang={lang} />
-        </div>
+    <header className="sticky top-0 z-30 border-b border-[#e4e4e4] bg-white">
+      <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-4 px-6 lg:px-8">
+        <a
+          href={siteHref(lang, "/")}
+          aria-label={siteName}
+          className="flex shrink-0 items-center"
+        >
+          <Image
+            src="/images/degson-logo.png"
+            alt={siteName}
+            width={314}
+            height={68}
+            className="h-8 w-auto"
+            priority
+          />
+        </a>
+        <SiteNavigation items={items} zh={lang === "zh"} />
+        <HeaderLangSwitcher lang={lang} />
       </div>
-      {/* 窄屏：第二行导航，避免顶栏挤爆 */}
-      <nav className="flex gap-4 overflow-x-auto border-t border-slate-100 px-4 py-2 text-sm md:hidden">
-        {NAV.map((n) => (
-          <Link
-            key={n.path}
-            href={siteUrl(lang, n.path)}
-            className="shrink-0 whitespace-nowrap text-slate-600 hover:text-[#003f88]"
-          >
-            {lang === "zh" ? n.zh : n.en}
-          </Link>
-        ))}
-      </nav>
+      <SiteNavigation items={items} zh={lang === "zh"} mobile />
     </header>
   );
 }

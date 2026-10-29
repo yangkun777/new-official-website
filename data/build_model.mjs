@@ -226,7 +226,7 @@ if (await ensureCollection('category', '产品分类（一级/二级/三级；�
   await ensureRelation('category', 'parent_id', 'category', null, 'SET NULL');
   await ensureFieldMeta('category', 'image', {
     interface: 'product-media-editor',
-    note: '分类图片：支持大图预览、上传、替换和清除；兼容历史图片地址',
+    note: '分类图片：支持大图预览、上传、从媒体库选择、放大查看、替换和清除；兼容历史图片地址',
     width: 'full',
   });
 }
@@ -284,6 +284,27 @@ async function ensureAliasField(collection, field, note) {
   if (r.status === 400 && /already/i.test(JSON.stringify(r.json))) { skip++; return true; }
   console.log(`      ✗ ${collection}.${field} 别名失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
   fail++; failures.push(`alias:${collection}.${field}`);
+  return false;
+}
+
+/** 仅承载编辑页布局，不存储业务数据。 */
+async function ensureAccordionGroup(collection, field, label, sort) {
+  const current = await api('GET', `/fields/${collection}/${field}`);
+  if (current.status === 200) { skip++; return true; }
+  const r = await api('POST', `/fields/${collection}`, {
+    field,
+    type: 'alias',
+    meta: {
+      special: ['alias', 'group', 'no-data'],
+      interface: 'group-accordion',
+      options: { accordionMode: true, start: 'closed' },
+      sort,
+      translations: [{ language: 'zh-CN', translation: label }],
+    },
+  });
+  if (r.status >= 200 && r.status < 300) { ok++; return true; }
+  console.log(`      ✗ ${collection}.${field} 分组失败 ${r.status}: ${JSON.stringify(r.json).slice(0, 220)}`);
+  fail++; failures.push(`group:${collection}.${field}`);
   return false;
 }
 
@@ -354,7 +375,7 @@ if (await ensureCollection('product_media', 'SKU 媒体关联（主图/详情图
   await ensureFieldSchema('product_media', 'media_id', { is_nullable: true });
   await ensureFieldMeta('product_media', 'file_id', {
     interface: 'product-media-editor',
-    note: '图片：支持大图预览、上传、替换和清除',
+    note: '图片：支持大图预览、上传、从媒体库选择、放大查看、替换和清除',
     width: 'full',
   });
   await ensureFieldMeta('product_media', 'media_id', {
@@ -380,6 +401,96 @@ if (await ensureCollection('product_media', 'SKU 媒体关联（主图/详情图
   await ensureRelation('product_media', 'media_id', 'media', 'product_links', 'CASCADE');
   await ensureRelation('product_media', 'file_id', 'directus_files', null, 'SET NULL');
 }
+
+// ---------- 3.2 SKU 产品资料试点 ----------
+// 一条产品仍是唯一主数据；语言只存在子项的翻译/语言字段中。
+console.log('\n### product_spec');
+if (await ensureCollection('product_spec', 'SKU 技术参数和附加信息（每行一个真实参数）')) {
+  await ensureField('product_spec', 'product_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_spec', 'kind', 'string', { max_length: 20, is_nullable: false }, { required: true });
+  await ensureField('product_spec', 'group_key', 'string', { max_length: 80, is_nullable: true, default_value: 'general' });
+  await ensureFieldSchema('product_spec', 'group_key', { is_nullable: true, default_value: 'general' });
+  await ensureField('product_spec', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('product_spec', 'status', 'string', { max_length: 16, is_nullable: true, default_value: 'published' });
+  await ensureField('product_spec', 'legacy_id', 'integer', { is_nullable: true });
+  await ensureAliasField('product_spec', 'translations', '本参数的中英文名称和值');
+  await ensureAliasField('product', 'specifications', '技术参数和附加信息');
+  await ensureRelation('product_spec', 'product_id', 'product', 'specifications', 'CASCADE');
+}
+console.log('\n### product_spec_translations');
+if (await ensureCollection('product_spec_translations', '技术参数翻译和值')) {
+  await ensureField('product_spec_translations', 'product_spec_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_spec_translations', 'language', 'string', { max_length: 8, is_nullable: false }, { required: true });
+  await ensureField('product_spec_translations', 'group_title', 'string', { max_length: 160, is_nullable: false }, { required: true });
+  await ensureField('product_spec_translations', 'label', 'string', { max_length: 255, is_nullable: false }, { required: true });
+  await ensureField('product_spec_translations', 'value', 'text', { is_nullable: false }, { required: true });
+  await ensureField('product_spec_translations', 'unit', 'string', { max_length: 40, is_nullable: true });
+  await ensureRelation('product_spec_translations', 'product_spec_id', 'product_spec', 'translations', 'CASCADE');
+}
+
+console.log('\n### product_certification');
+if (await ensureCollection('product_certification', 'SKU 认证分组（UL/VDE 等）')) {
+  await ensureField('product_certification', 'product_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_certification', 'code', 'string', { max_length: 80, is_nullable: false }, { required: true });
+  await ensureField('product_certification', 'logo_file_id', 'string', { max_length: 36, is_nullable: true });
+  await ensureField('product_certification', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('product_certification', 'status', 'string', { max_length: 16, is_nullable: true, default_value: 'published' });
+  await ensureField('product_certification', 'legacy_id', 'integer', { is_nullable: true });
+  await ensureAliasField('product_certification', 'rows', '认证参数行');
+  await ensureAliasField('product', 'certifications', '认证和测试数据');
+  await ensureRelation('product_certification', 'product_id', 'product', 'certifications', 'CASCADE');
+  await ensureRelation('product_certification', 'logo_file_id', 'directus_files', null, 'SET NULL');
+}
+console.log('\n### product_certification_row');
+if (await ensureCollection('product_certification_row', '认证数据表格行（每语言一行）')) {
+  await ensureField('product_certification_row', 'certification_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_certification_row', 'language', 'string', { max_length: 8, is_nullable: false }, { required: true });
+  await ensureField('product_certification_row', 'label', 'string', { max_length: 255, is_nullable: false }, { required: true });
+  for (const field of ['value_1', 'value_2', 'value_3']) {
+    await ensureField('product_certification_row', field, 'string', { max_length: 255, is_nullable: true });
+  }
+  await ensureField('product_certification_row', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('product_certification_row', 'legacy_id', 'integer', { is_nullable: true });
+  await ensureRelation('product_certification_row', 'certification_id', 'product_certification', 'rows', 'CASCADE');
+}
+
+console.log('\n### product_document');
+if (await ensureCollection('product_document', 'SKU 文件下载（PDF/CAD/3D）')) {
+  await ensureField('product_document', 'product_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_document', 'language', 'string', { max_length: 8, is_nullable: true });
+  await ensureField('product_document', 'kind', 'string', { max_length: 24, is_nullable: false }, { required: true });
+  await ensureField('product_document', 'title', 'string', { max_length: 255, is_nullable: false }, { required: true });
+  await ensureField('product_document', 'file_id', 'string', { max_length: 36, is_nullable: true });
+  await ensureField('product_document', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('product_document', 'status', 'string', { max_length: 16, is_nullable: true, default_value: 'draft' });
+  await ensureField('product_document', 'legacy_id', 'integer', { is_nullable: true });
+  await ensureAliasField('product', 'documents', 'PDF、CAD、3D 等文件');
+  await ensureRelation('product_document', 'product_id', 'product', 'documents', 'CASCADE');
+  await ensureRelation('product_document', 'file_id', 'directus_files', null, 'SET NULL');
+}
+
+console.log('\n### product_relation');
+if (await ensureCollection('product_relation', '配套、关联和相近规格的类型化关系')) {
+  await ensureField('product_relation', 'product_id', 'integer', { is_nullable: false }, { required: true });
+  await ensureField('product_relation', 'target_product_id', 'integer', { is_nullable: true });
+  await ensureField('product_relation', 'target_series_id', 'integer', { is_nullable: true });
+  await ensureField('product_relation', 'kind', 'string', { max_length: 24, is_nullable: false }, { required: true });
+  await ensureField('product_relation', 'sort', 'integer', { is_nullable: true, default_value: 0 });
+  await ensureField('product_relation', 'status', 'string', { max_length: 16, is_nullable: true, default_value: 'published' });
+  await ensureField('product_relation', 'legacy_id', 'integer', { is_nullable: true });
+  await ensureAliasField('product', 'related_products', '配套、关联和相近规格产品');
+  await ensureRelation('product_relation', 'product_id', 'product', 'related_products', 'CASCADE');
+  await ensureRelation('product_relation', 'target_product_id', 'product', null, 'CASCADE');
+  await ensureRelation('product_relation', 'target_series_id', 'series', null, 'CASCADE');
+}
+
+for (const [field, label, sort] of [
+  ['product_media_group', '产品图片', 10],
+  ['product_technical_group', '技术参数与附加信息', 11],
+  ['product_certification_group', '认证', 12],
+  ['product_document_group', '资料下载', 13],
+  ['product_relation_group', '配套与相关产品', 14],
+]) await ensureAccordionGroup('product', field, label, sort);
 
 // ---------- 4. news ----------
 console.log('\n### news');

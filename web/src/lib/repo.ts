@@ -19,8 +19,12 @@ import type {
   Variant,
   ProductDetail,
   ProductMedia,
+  CategoryPathNode,
 } from "@/types/product";
 import type { NewsListItem, NewsDetail } from "@/types/news";
+import { newsIdFromPublicSlug, newsPublicSlug } from "./newsSlug";
+import { categoryPublicPath, seriesPublicPath } from "./productPaths";
+import { productPublicSlug } from "./productSlug";
 
 // 全部通过 Directus REST API 取数（PRD §5.2：前台不直连数据库）。
 // 本文件是「主表 + *_translations」到页面视图的唯一适配层，页面不感知 translations 结构。
@@ -31,7 +35,7 @@ import type { NewsListItem, NewsDetail } from "@/types/news";
 
 /** 四个翻译表模板一致，字段清单只需维护一份 */
 const TRANS_FIELDS =
-  "id,language,name,slug,seo_title,seo_description,h1,short_description,description";
+  "id,language,name,slug,seo_title,seo_description,seo_keywords,h1,short_description,description";
 
 /** Directus 常见默认 LIMIT_MAX 为 100；分页读取不请求更大的单页，避免服务端截断却页数算错。 */
 const PAGINATION_LIMIT = 100;
@@ -54,7 +58,7 @@ function dfList(prefix: string, lang: Lang): Record<string, string> {
 }
 
 /** 某条记录实际拥有翻译的语言（升序按 LANGS 顺序），用于 hreflang */
-function langsOf(rows: TranslationRow[] | undefined): Lang[] {
+function langsOf(rows: Array<{ language: string }> | undefined): Lang[] {
   if (!rows?.length) return [];
   return LANGS.filter((l) => rows.some((r) => r.language === l));
 }
@@ -133,6 +137,43 @@ const SERIES_CHAIN_FIELDS = [
   tf("category_id.parent_id.parent_id.translations"),
 ].join(",");
 
+/** Build the localized root-to-leaf category path. Never fill a missing segment from another language. */
+function categoryPathOf(node: RawCatNode | null | undefined, lang: Lang): CategoryPathNode[] {
+  const path: CategoryPathNode[] = [];
+  let current = node ?? null;
+  while (current) {
+    const translation = current.translations.find((row) => row.language === lang && row.name?.trim() && row.slug?.trim());
+    if (!translation) return [];
+    path.unshift({ id: current.id, name: translation.name!, slug: translation.slug!, level: current.level });
+    current = current.parent_id ?? null;
+  }
+  return path;
+}
+
+function categoryPathsByLang(node: RawCatNode): Partial<Record<Lang, string>> {
+  const result: Partial<Record<Lang, string>> = {};
+  for (const language of LANGS) {
+    const translation = node.translations.find((row) => row.language === language && row.slug?.trim());
+    if (!translation) continue;
+    result[language] = categoryPublicPath(categoryPathOf(node, language))
+      ?? `/product/category/${encodeURIComponent(translation.slug!)}`;
+  }
+  return result;
+}
+
+function seriesPathsByLang(node: RawSeriesNode): Partial<Record<Lang, string>> {
+  const result: Partial<Record<Lang, string>> = {};
+  for (const language of LANGS) {
+    const translation = node.translations.find((row) => row.language === language && row.name?.trim() && row.slug?.trim());
+    if (!translation) continue;
+    result[language] = seriesPublicPath({
+      slug: translation.slug!, matecode: node.matecode,
+      categoryPath: categoryPathOf(node.category_id, language),
+    });
+  }
+  return result;
+}
+
 /** 详情页拉全部翻译，不需要 deep 语言过滤；父链各层仍需各自的语言过滤之外的选取 */
 function catChainFilters(lang: Lang): Record<string, string> {
   return {
@@ -195,7 +236,7 @@ export function localizeSiteCopy(
 // 营销页 / 社交外链（后台可配置）
 // ---------------------------------------------------------------------------
 
-export type SitePageSlug = "solutions" | "services" | "about";
+export type SitePageSlug = "home" | "news" | "solutions" | "services" | "about";
 
 export interface SitePageView {
   slug: SitePageSlug;
@@ -204,10 +245,22 @@ export interface SitePageView {
   body: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  seo_keywords: string | null;
+  h1: string | null;
   coverImage: string | null;
   panels: Array<{ image: string | null; title: string; text: string }>;
   lang: Lang;
   availableLangs: Lang[];
+}
+
+function firstMedia(
+  ...values: Array<string | null | undefined>
+): string | null {
+  for (const value of values) {
+    const url = resolveMediaUrl(value);
+    if (url) return url;
+  }
+  return null;
 }
 
 interface RawSitePageTranslation {
@@ -218,12 +271,18 @@ interface RawSitePageTranslation {
   body: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  seo_keywords?: string | null;
+  h1?: string | null;
+  cover_image?: string | null;
   panel_1_title?: string | null;
   panel_1_text?: string | null;
+  panel_1_image?: string | null;
   panel_2_title?: string | null;
   panel_2_text?: string | null;
+  panel_2_image?: string | null;
   panel_3_title?: string | null;
   panel_3_text?: string | null;
+  panel_3_image?: string | null;
 }
 
 interface RawSitePage {
@@ -261,17 +320,17 @@ export async function getSitePage(
     const t = picked.row;
     const panels = [
       {
-        image: resolveMediaUrl(row.panel_image_1),
+        image: firstMedia(t.panel_1_image, row.panel_image_1),
         title: t.panel_1_title ?? "",
         text: t.panel_1_text ?? "",
       },
       {
-        image: resolveMediaUrl(row.panel_image_2),
+        image: firstMedia(t.panel_2_image, row.panel_image_2),
         title: t.panel_2_title ?? "",
         text: t.panel_2_text ?? "",
       },
       {
-        image: resolveMediaUrl(row.panel_image_3),
+        image: firstMedia(t.panel_3_image, row.panel_image_3),
         title: t.panel_3_title ?? "",
         text: t.panel_3_text ?? "",
       },
@@ -283,10 +342,12 @@ export async function getSitePage(
       body: t.body,
       seo_title: t.seo_title,
       seo_description: t.seo_description,
-      coverImage: resolveMediaUrl(row.cover_image),
+      seo_keywords: t.seo_keywords ?? null,
+      h1: t.h1 ?? null,
+      coverImage: firstMedia(t.cover_image, row.cover_image),
       panels,
       lang: t.language as Lang,
-      availableLangs: langsOf(row.translations as TranslationRow[]),
+      availableLangs: langsOf(row.translations),
     };
   } catch {
     return null;
@@ -305,6 +366,7 @@ export interface PageSectionView {
   stat2Label: string | null;
   intro1: string | null;
   intro2: string | null;
+  cta: string | null;
   image: string | null;
   children: PageSectionView[];
 }
@@ -319,6 +381,8 @@ interface RawPageSectionTranslation {
   stat2_label?: string | null;
   intro1?: string | null;
   intro2?: string | null;
+  cta?: string | null;
+  image?: string | null;
 }
 
 interface RawPageSection {
@@ -354,7 +418,8 @@ function toSectionView(row: RawPageSection, lang: Lang): PageSectionView | null 
     stat2Label: t.stat2_label ?? null,
     intro1: t.intro1 ?? null,
     intro2: t.intro2 ?? null,
-    image: resolveMediaUrl(row.image),
+    cta: t.cta ?? null,
+    image: firstMedia(t.image, row.image),
     children: [],
   };
 }
@@ -526,7 +591,7 @@ export async function getHomeBlocks(lang: Lang): Promise<HomeBlockView[]> {
     return list
       .filter((r) => HOME_KINDS.has(r.kind as HomeBlockKind))
       .map((r) => {
-        const t = pickTranslation(r.translations as TranslationRow[] | undefined, lang);
+        const t = pickTranslation(r.translations, lang);
         const href = r.link_path && HOME_LINKS.has(r.link_path) ? r.link_path : "/solutions";
         return {
           key: r.key,
@@ -550,7 +615,8 @@ export async function getHomeBlocks(lang: Lang): Promise<HomeBlockView[]> {
 
 function toSubCard(node: RawCatNode, lang: Lang): SubCategoryCard | null {
   const t = pickTranslation(node.translations, lang);
-  if (!t) return null;
+  // 分类列表不回退英文：后台没有该语言翻译行，前台对应语言站就不展示。
+  if (!t || t.isFallback) return null;
   return {
     id: node.id,
     name: t.row.name ?? "",
@@ -559,6 +625,7 @@ function toSubCard(node: RawCatNode, lang: Lang): SubCategoryCard | null {
     description: t.row.short_description ?? t.row.description ?? null,
     lang: t.row.language as Lang,
     fallback: t.isFallback,
+    categoryPath: categoryPathOf(node, t.row.language as Lang),
     updated_at: node.updated_at ?? null,
   };
 }
@@ -580,6 +647,7 @@ async function getCategoryPage({
 }: CategoryPageQuery): Promise<{ items: SubCategoryCard[]; total: number }> {
   const filters: Record<string, string> = {
     "filter[status][_eq]": "published",
+    "filter[translations][language][_eq]": lang,
   };
   if (level !== undefined) filters["filter[level][_eq]"] = String(level);
   if (parentId !== undefined) filters["filter[parent_id][_eq]"] = String(parentId);
@@ -591,7 +659,7 @@ async function getCategoryPage({
       sort: "sort",
       limit: String(limit),
       page: String(page),
-      fields: `id,level,sort,status,image,updated_at,${tf("translations")}`,
+      fields: `${CAT_CHAIN_FIELDS},sort,status,updated_at`,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.category
@@ -630,12 +698,26 @@ export async function getCategoriesForSitemap(
   return getCategoryPage({ level, lang, page, limit });
 }
 
+function slugByLangOf(
+  rows: Array<{ language: string; slug?: string | null }> | undefined
+): Partial<Record<Lang, string>> {
+  const out: Partial<Record<Lang, string>> = {};
+  for (const lang of LANGS) {
+    const slug = rows?.find((row) => row.language === lang)?.slug?.trim();
+    if (slug) out[lang] = slug;
+  }
+  return out;
+}
+
 export interface LocalizedCategory {
   category: Category;
   /** 该 slug 行真正所属的语言——canonical 用 */
   resolvedLang: Lang;
   /** 该分类存在翻译的全部语言——hreflang 用 */
   availableLangs: Lang[];
+  /** 各语言自己的分类 slug，用于跨语言 URL 收敛 */
+  slugByLang: Partial<Record<Lang, string>>;
+  pathsByLang: Partial<Record<Lang, string>>;
 }
 
 export async function getCategoryBySlug(
@@ -656,16 +738,18 @@ export async function getCategoryBySlug(
   const node = items[0];
   if (!node) return null;
 
-  // slug 唯一标识某一条翻译行；以该行语言为准（而非请求语言）
+  // slug 可来自任一语言；语言切换时优先解析同一分类的目标语言翻译。
   const own = node.translations.find((r) => r.slug === slug);
   if (!own || !LANGS.includes(own.language as Lang)) return null;
-  const resolvedLang = own.language as Lang;
-  const t = pickTranslation(node.translations, resolvedLang);
+  const t = pickTranslation(node.translations, lang);
   if (!t) return null;
+  const resolvedLang = t.row.language as Lang;
 
   return {
     resolvedLang,
     availableLangs: langsOf(node.translations),
+    slugByLang: slugByLangOf(node.translations),
+    pathsByLang: categoryPathsByLang(node),
     category: {
       id: node.id,
       level: node.level,
@@ -678,7 +762,10 @@ export async function getCategoryBySlug(
       description: t.row.description ?? t.row.short_description ?? null,
       seo_title: t.row.seo_title,
       seo_description: t.row.seo_description,
+      seo_keywords: t.row.seo_keywords ?? null,
+      h1: t.row.h1 ?? null,
       parent_id: chainNode(node.parent_id, resolvedLang),
+      categoryPath: categoryPathOf(node, resolvedLang),
     },
   };
 }
@@ -703,16 +790,18 @@ export async function getSubCategories(
 // ---------------------------------------------------------------------------
 
 function toSeriesItem(node: RawSeriesNode, lang: Lang): SeriesListItem | null {
-  const t = pickTranslation(node.translations, lang);
+  const t = pickTranslation(node.translations.filter(row => Boolean(row.name?.trim())), lang);
   if (!t) return null;
   return {
     id: node.id,
     matecode: node.matecode,
     name: t.row.name ?? "",
+    slug: t.row.slug ?? node.matecode,
     image: node.image,
     description: t.row.short_description ?? t.row.description ?? null,
     lang: t.row.language as Lang,
     fallback: t.isFallback,
+    categoryPath: categoryPathOf(node.category_id, t.row.language as Lang),
     updated_at: node.updated_at ?? null,
   };
 }
@@ -731,7 +820,7 @@ export async function getSeriesByCategory(
       sort: "-sort",
       limit: String(limit),
       page: String(page),
-      fields: `id,matecode,image,${tf("translations")}`,
+      fields: SERIES_CHAIN_FIELDS,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.series
@@ -757,7 +846,7 @@ export async function getSeriesForSitemap(
       sort: "id",
       limit: String(limit),
       page: String(page),
-      fields: `id,matecode,image,updated_at,${tf("translations")}`,
+      fields: `${SERIES_CHAIN_FIELDS},updated_at`,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.series
@@ -775,6 +864,7 @@ export interface LocalizedSeries {
   /** matecode 与语言无关，但翻译可能缺失 → 实际可服务的语言 */
   resolvedLang: Lang;
   availableLangs: Lang[];
+  pathsByLang: Partial<Record<Lang, string>>;
 }
 
 export async function getSeriesByMatecode(
@@ -794,23 +884,71 @@ export async function getSeriesByMatecode(
   );
   const node = items[0];
   if (!node) return null;
-  const t = pickTranslation(node.translations, lang);
+  const t = pickTranslation(node.translations.filter(row => Boolean(row.name?.trim())), lang);
   if (!t) return null; // 请求语言与 en 都没有 → 该系列无可服务内容
   const resolvedLang = t.row.language as Lang;
 
   return {
     resolvedLang,
-    availableLangs: langsOf(node.translations),
+    availableLangs: langsOf(node.translations.filter(row => Boolean(row.name?.trim()))),
+    pathsByLang: seriesPathsByLang(node),
     series: {
       id: node.id,
       matecode: node.matecode,
+      slug: t.row.slug ?? node.matecode,
       image: node.image,
       name: t.row.name ?? "",
       short_description: t.row.short_description,
       description: t.row.description ?? t.row.short_description ?? null,
       seo_title: t.row.seo_title,
       seo_description: t.row.seo_description,
+      seo_keywords: t.row.seo_keywords ?? null,
+      h1: t.row.h1 ?? null,
       category_id: chainNode(node.category_id, resolvedLang),
+      categoryPath: categoryPathOf(node.category_id, resolvedLang),
+    },
+  };
+}
+
+/** Public series URL lookup. The slug can belong to any translation; the requested language is resolved below. */
+export async function getSeriesBySlug(
+  slug: string,
+  lang: Lang
+): Promise<LocalizedSeries | null> {
+  const { items } = await apiGetList<RawSeriesNode>(
+    "/items/series",
+    {
+      "filter[status][_eq]": "published",
+      "filter[translations][slug][_eq]": slug,
+      limit: "1",
+      fields: SERIES_CHAIN_FIELDS,
+      ...catChainFilters(lang),
+    },
+    CONTENT_TAGS.series
+  );
+  const node = items[0];
+  if (!node) return null;
+  const translations = node.translations.filter(row => Boolean(row.name?.trim()));
+  const t = pickTranslation(translations, lang);
+  if (!t) return null;
+  return {
+    resolvedLang: t.row.language as Lang,
+    availableLangs: langsOf(translations),
+    pathsByLang: seriesPathsByLang(node),
+    series: {
+      id: node.id,
+      matecode: node.matecode,
+      slug: t.row.slug ?? node.matecode,
+      image: node.image,
+      name: t.row.name ?? "",
+      short_description: t.row.short_description,
+      description: t.row.description ?? t.row.short_description ?? null,
+      seo_title: t.row.seo_title,
+      seo_description: t.row.seo_description,
+      seo_keywords: t.row.seo_keywords ?? null,
+      h1: t.row.h1 ?? null,
+      category_id: chainNode(node.category_id, t.row.language as Lang),
+      categoryPath: categoryPathOf(node.category_id, t.row.language as Lang),
     },
   };
 }
@@ -830,7 +968,7 @@ export async function getRelatedSeries(
       "filter[matecode][_neq]": excludeMatecode,
       sort: "-sort",
       limit: String(limit),
-      fields: `id,matecode,image,${tf("translations")}`,
+      fields: SERIES_CHAIN_FIELDS,
       ...dfList("translations", lang),
     },
     CONTENT_TAGS.series
@@ -902,12 +1040,19 @@ interface RawProduct {
   status: string;
   translations: TranslationRow[];
   media_links?: RawProductMedia[];
+  series_id?: {
+    matecode: string;
+    image: string | null;
+    translations: TranslationRow[];
+    category_id?: RawCatNode | null;
+  } | null;
 }
 
 export interface LocalizedProduct {
   product: ProductDetail;
   resolvedLang: Lang;
   availableLangs: Lang[];
+  pathsByLang: Partial<Record<Lang, string>>;
 }
 
 export async function getProductByOrderNo(
@@ -923,6 +1068,14 @@ export async function getProductByOrderNo(
       fields: [
         "id,order_no,title,poles,pitch,combined_title,status",
         tf("translations"),
+        "series_id.matecode,series_id.image",
+        tf("series_id.translations"),
+        "series_id.category_id.id,series_id.category_id.level,series_id.category_id.image",
+        tf("series_id.category_id.translations"),
+        "series_id.category_id.parent_id.id,series_id.category_id.parent_id.level,series_id.category_id.parent_id.image",
+        tf("series_id.category_id.parent_id.translations"),
+        "series_id.category_id.parent_id.parent_id.id,series_id.category_id.parent_id.parent_id.level,series_id.category_id.parent_id.parent_id.image",
+        tf("series_id.category_id.parent_id.parent_id.translations"),
         "media_links.id,media_links.kind,media_links.sort,media_links.is_primary",
         "media_links.file_id",
         "media_links.media_id.id,media_links.media_id.kind,media_links.media_id.file_id",
@@ -940,25 +1093,50 @@ export async function getProductByOrderNo(
   if (!picked) return null;
 
   const media: ProductMedia[] = (node.media_links ?? [])
-    .filter((link) => link.media_id?.status !== "draft")
-    .map((link) => ({
-      id: link.id,
-      kind: link.kind,
-      sort: link.sort ?? link.media_id?.sort ?? 0,
-      is_primary: Boolean(link.is_primary),
-      url: resolveMediaUrl(link.file_id) ?? resolveMediaUrl(link.media_id?.file_id),
-      alt: link.media_id?.alt ?? null,
-      caption: link.media_id?.caption ?? null,
-    }))
+    .filter((link) =>
+      link.media_id?.status !== "draft" &&
+      ["product_main", "product_detail", "product_diagram"].includes(link.kind)
+    )
+    .map((link) => {
+      const fileId = link.file_id ?? link.media_id?.file_id;
+      const url = fileId && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(fileId)
+        ? `/api/product-media/${encodeURIComponent(node.order_no)}/${fileId}`
+        : resolveMediaUrl(fileId);
+      return {
+        id: link.id,
+        kind: link.kind,
+        sort: link.sort ?? link.media_id?.sort ?? 0,
+        is_primary: Boolean(link.is_primary),
+        url,
+        alt: link.media_id?.alt ?? null,
+        caption: link.media_id?.caption ?? null,
+      };
+    })
     .filter((item) => item.url !== null)
     .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort - b.sort || a.id - b.id);
 
   const row = picked.row;
+  const pathsByLang: Partial<Record<Lang, string>> = {};
+  for (const language of LANGS) {
+    const translation = node.translations.find((item) => item.language === language);
+    if (!translation) continue;
+    const slug = productPublicSlug(node.combined_title || node.title || translation.name, node.order_no);
+    const seriesRow = node.series_id?.translations.find((item) => item.language === language && item.name?.trim() && item.slug?.trim());
+    const categoryPath = categoryPathOf(node.series_id?.category_id, language);
+    pathsByLang[language] = seriesRow && categoryPath.length
+      ? `${seriesPublicPath({ slug: seriesRow.slug!, matecode: node.series_id!.matecode, categoryPath })}/${encodeURIComponent(slug)}`
+      : `/product/${encodeURIComponent(slug)}`;
+  }
+  const seriesTranslation = node.series_id
+    ? pickTranslation(node.series_id.translations, row.language as Lang)
+    : null;
   return {
     resolvedLang: row.language as Lang,
     availableLangs: langsOf(node.translations),
+    pathsByLang,
     product: {
       id: node.id,
+      lang: row.language as Lang,
       order_no: node.order_no,
       title: node.title,
       poles: node.poles,
@@ -971,8 +1149,73 @@ export async function getProductByOrderNo(
       description: row.description,
       seo_title: row.seo_title,
       seo_description: row.seo_description,
+      seo_keywords: row.seo_keywords ?? null,
       media,
+      series: node.series_id && seriesTranslation
+        ? {
+            matecode: node.series_id.matecode,
+            slug: seriesTranslation.row.slug ?? node.series_id.matecode,
+            name: seriesTranslation.row.name ?? node.series_id.matecode,
+            lang: seriesTranslation.row.language as Lang,
+            image: resolveMediaUrl(node.series_id.image),
+            categoryPath: categoryPathOf(node.series_id.category_id, seriesTranslation.row.language as Lang),
+          }
+        : null,
     },
+  };
+}
+
+interface RawProductUrlRow {
+  order_no: string;
+  title: string | null;
+  combined_title: string | null;
+  updated_at: string | null;
+  translations: Array<Pick<TranslationRow, "language" | "name" | "slug">>;
+  series_id?: {
+    matecode: string;
+    translations: Array<Pick<TranslationRow, "language" | "name" | "slug">>;
+    category_id?: RawCatNode | null;
+  } | null;
+}
+
+/** Published SKU URLs for sitemap; fetch only URL fields, not media or technical data. */
+export async function getProductsForSitemap(lang: Lang, page: number, limit = PAGINATION_LIMIT) {
+  const { items, total } = await apiGetList<RawProductUrlRow>(
+    "/items/product",
+    {
+      "filter[status][_eq]": "published",
+      "filter[translations][language][_eq]": lang,
+      sort: "id",
+      page: String(page),
+      limit: String(limit),
+      fields: [
+        "order_no,title,combined_title,updated_at",
+        "translations.language,translations.name,translations.slug",
+        "series_id.matecode,series_id.translations.language,series_id.translations.name,series_id.translations.slug",
+        "series_id.category_id.id,series_id.category_id.level,series_id.category_id.image",
+        tf("series_id.category_id.translations"),
+        "series_id.category_id.parent_id.id,series_id.category_id.parent_id.level,series_id.category_id.parent_id.image",
+        tf("series_id.category_id.parent_id.translations"),
+        "series_id.category_id.parent_id.parent_id.id,series_id.category_id.parent_id.parent_id.level,series_id.category_id.parent_id.parent_id.image",
+        tf("series_id.category_id.parent_id.parent_id.translations"),
+      ].join(","),
+      ...dfList("translations", lang),
+    },
+    CONTENT_TAGS.product,
+  );
+  return {
+    total,
+    items: items.flatMap((node) => {
+      const translation = node.translations.find((row) => row.language === lang);
+      if (!translation) return [];
+      const slug = productPublicSlug(node.combined_title || node.title || translation.name, node.order_no);
+      const seriesTranslation = node.series_id?.translations.find((row) => row.language === lang && row.name?.trim() && row.slug?.trim());
+      const categoryPath = categoryPathOf(node.series_id?.category_id, lang);
+      const path = seriesTranslation && categoryPath.length
+        ? `${seriesPublicPath({ slug: seriesTranslation.slug!, matecode: node.series_id!.matecode, categoryPath })}/${encodeURIComponent(slug)}`
+        : `/product/${encodeURIComponent(slug)}`;
+      return [{ lang, path, updated_at: node.updated_at }];
+    }),
   };
 }
 
@@ -1013,10 +1256,14 @@ function toNewsListItems(items: RawNews[], lang: Lang): NewsListItem[] {
     out.push({
       id: t.row.id,
       newsId: n.id,
-      slug: t.row.slug ?? "",
+      slug: newsPublicSlug(t.row.slug, n.id),
       publish_date: n.publish_date,
       cover_image: resolveMediaUrl(n.cover_image),
       title: t.row.name ?? "",
+      h1: t.row.h1 ?? null,
+      seo_title: t.row.seo_title ?? null,
+      seo_description: t.row.seo_description ?? null,
+      seo_keywords: t.row.seo_keywords ?? null,
       summary: t.row.short_description,
       lang: t.row.language as Lang,
       fallback: t.isFallback,
@@ -1058,28 +1305,40 @@ export interface LocalizedNews {
 
 /** 新闻详情：slug 属于某一条翻译行，以该行语言为 canonical */
 export async function getNewsBySlug(
-  slug: string
+  slug: string,
+  lang: Lang = DEFAULT_LANG
 ): Promise<LocalizedNews | null> {
+  const decoded = decodeURIComponent(slug);
+  const fallbackId = newsIdFromPublicSlug(decoded);
   const { items } = await apiGetList<RawNews>(
     "/items/news",
-    {
-      "filter[status][_eq]": "published",
-      "filter[translations][slug][_eq]": slug,
-      limit: "1",
-      fields: `id,publish_date,cover_image,status,${tf("translations")}`,
-    },
+    fallbackId
+      ? {
+          "filter[status][_eq]": "published",
+          "filter[id][_eq]": String(fallbackId),
+          limit: "1",
+          fields: `id,publish_date,cover_image,status,${tf("translations")}`,
+        }
+      : {
+          "filter[status][_eq]": "published",
+          "filter[translations][slug][_eq]": decoded,
+          limit: "1",
+          fields: `id,publish_date,cover_image,status,${tf("translations")}`,
+        },
     CONTENT_TAGS.news
   );
   const n = items[0];
   if (!n) return null;
 
-  const own = n.translations.find((r) => r.slug === slug);
+  const own =
+    n.translations.find((r) => r.slug === decoded) ??
+    (fallbackId ? pickTranslation(n.translations, lang)?.row : undefined);
   if (!own || !LANGS.includes(own.language as Lang)) return null;
   const resolvedLang = own.language as Lang;
   const slugs = Object.fromEntries(
     n.translations
-      .filter((row) => LANGS.includes(row.language as Lang) && row.slug)
-      .map((row) => [row.language, row.slug as string])
+      .filter((row) => LANGS.includes(row.language as Lang))
+      .map((row) => [row.language, newsPublicSlug(row.slug, n.id)])
   ) as Partial<Record<Lang, string>>;
 
   return {
@@ -1089,10 +1348,14 @@ export async function getNewsBySlug(
     news: {
       id: own.id,
       newsId: n.id,
-      slug: own.slug ?? "",
+      slug: newsPublicSlug(own.slug, n.id),
       publish_date: n.publish_date,
       cover_image: resolveMediaUrl(n.cover_image),
       title: own.name ?? "",
+      h1: own.h1 ?? null,
+      seo_title: own.seo_title ?? null,
+      seo_description: own.seo_description ?? null,
+      seo_keywords: own.seo_keywords ?? null,
       summary: own.short_description,
       body: own.description,
       lang: resolvedLang,

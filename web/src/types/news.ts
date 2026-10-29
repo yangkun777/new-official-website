@@ -9,6 +9,10 @@ export interface NewsListItem {
   publish_date: string | null;
   cover_image: string | null;
   title: string;
+  h1: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string | null;
   summary: string | null;
   /** 该条内容实际所属语言（回退时等于 en） */
   lang: Lang;

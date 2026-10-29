@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>方向 B · 深底影棚产品</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: "IBM Plex Sans", sans-serif; background: #070808; color: #f3f3f1; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    .note { position: fixed; top: 12px; left: 12px; z-index: 9; background: #c8102e; color: #fff; font-size: 11px; letter-spacing: .12em; padding: 6px 10px; }
+    header { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; height: 72px; padding: 0 40px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: .12em; font-size: 13px; }
+    .tri { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 12px solid #c8102e; }
+    nav { display: flex; gap: 28px; font-size: 12px; letter-spacing: .14em; color: rgba(255,255,255,.62); }
+    .lang { font-size: 12px; color: rgba(255,255,255,.5); }
+    .stage { position: relative; min-height: 100vh; overflow: hidden; }
+    .stage img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% center; filter: contrast(1.05); }
+    .veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7,8,8,.92) 0%, rgba(7,8,8,.35) 48%, rgba(7,8,8,.15) 100%); }
+    .copy { position: relative; z-index: 1; max-width: 520px; padding: 22vh 40px 80px; }
+    .copy .k { font-size: 11px; letter-spacing: .28em; color: rgba(255,255,255,.45); }
+    h1 { margin-top: 18px; font-size: 56px; font-weight: 500; line-height: 1.05; letter-spacing: -.03em; }
+    .lead { margin-top: 22px; font-size: 16px; line-height: 1.6; color: rgba(255,255,255,.68); max-width: 34ch; }
+    .cta { margin-top: 36px; display: inline-flex; align-items: center; height: 46px; padding: 0 24px; border: 1px solid #fff; font-size: 12px; letter-spacing: .16em; }
+    .rail { position: absolute; right: 0; bottom: 0; left: 0; z-index: 2; display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid rgba(255,255,255,.12); background: rgba(7,8,8,.55); }
+    .rail div { padding: 22px 40px; font-size: 12px; letter-spacing: .08em; color: rgba(255,255,255,.55); }
+    .rail div + div { border-left: 1px solid rgba(255,255,255,.12); }
+    .rail b { display: block; color: #fff; font-weight: 500; font-size: 14px; letter-spacing: 0; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="note">方向 B · 深底影棚产品 · 预览稿</div>
+  <div class="stage">
+    <img class="bg" src="/images/marketing/home-product-1.png" alt="" />
+    <div class="veil"></div>
+    <header>
+      <a class="brand" href="#"><span class="tri"></span>DEGSON</a>
+      <nav>
+        <a href="#">PRODUCTS</a>
+        <a href="#">SOLUTIONS</a>
+        <a href="#">SERVICE</a>
+        <a href="#">ABOUT</a>
+      </nav>
+      <span class="lang">EN &nbsp;|&nbsp; 中文</span>
+    </header>
+    <div class="copy">
+      <p class="k">DEGSON · 高松电子</p>
+      <h1>连接，被精确设计。</h1>
+      <p class="lead">工业连接器的结构、锁紧与认证，用一张产品图说完第一句话。</p>
+      <a class="cta" href="#">进入产品目录</a>
+    </div>
+    <div class="rail">
+      <div><b>PCB 端子</b>板级接线，Push-in 与螺钉</div>
+      <div><b>圆形连接器</b>M 系列 · 防水锁紧</div>
+      <div><b>重载 / 储能</b>柜外与大电流接口</div>
+    </div>
+  </div>
+</body>
+</html>

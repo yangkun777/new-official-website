@@ -22,6 +22,7 @@ export interface TranslationRow {
   slug: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  seo_keywords: string | null;
   h1: string | null;
   short_description: string | null;
   description: string | null;

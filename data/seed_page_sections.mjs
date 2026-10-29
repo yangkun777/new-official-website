@@ -26,7 +26,7 @@ const PAGE_CHOICES = [
 const IMAGE_META = {
   interface: "product-media-editor",
   display: "image",
-  note: "建议约 498×280。可上传或粘贴地址；空则前台不显示该图",
+  note: "各语言共用图。某语言要单独换图，填翻译行里的「本语言图片」。",
   width: "full",
 };
 
@@ -428,8 +428,8 @@ async function main() {
     archive_value: "draft",
     unarchive_value: "published",
     sort_field: "sort",
-    note: "服务页的具体板块。先选所属页面和上级，再在「多语言内容」里填简介、数据和介绍。",
-    translations: [{ language: "zh-CN", translation: "服务板块" }],
+    note: "服务、方案、关于页的板块。先选所属页面和上级，再在「多语言内容」里填正文、图片和数据。",
+    translations: [{ language: "zh-CN", translation: "页面板块" }],
   });
 
   await ensureField(token, "page_sections", "code", "string", { max_length: 64, is_unique: true }, {
@@ -442,7 +442,7 @@ async function main() {
     required: true,
     interface: "select-dropdown",
     options: { choices: PAGE_CHOICES },
-    note: "目前前台只渲染「服务」。方案/关于可先建板块，暂不展示。",
+    note: "选择板块所属页面；服务、方案、关于的已发布板块会在前台展示。",
     width: "half",
     translations: [{ language: "zh-CN", translation: "所属页面" }],
   });
@@ -467,7 +467,7 @@ async function main() {
     note: "数字越小越靠前",
     translations: [{ language: "zh-CN", translation: "显示顺序" }],
   });
-  await ensureField(token, "page_sections", "status", "string", { max_length: 16, default_value: "published" }, {
+  await ensureField(token, "page_sections", "status", "string", { max_length: 16, default_value: "draft" }, {
     interface: "select-dropdown",
     options: { choices: [{ text: "已发布", value: "published" }, { text: "草稿", value: "draft" }] },
     width: "half",
@@ -485,7 +485,7 @@ async function main() {
     sort: 4,
     icon: "translate",
     display_template: "{{title}}",
-    translations: [{ language: "zh-CN", translation: "服务板块翻译" }],
+    translations: [{ language: "zh-CN", translation: "页面板块翻译" }],
   });
   await ensureField(token, "page_sections_translations", "page_sections_id", "integer", {}, {
     hidden: true,
@@ -530,12 +530,25 @@ async function main() {
     translations: [{ language: "zh-CN", translation: "数据 2 介绍" }],
   });
   await ensureField(token, "page_sections_translations", "intro1", "text", {}, {
-    interface: "input-multiline",
+    interface: "input-rich-text-html",
+    note: "板块正文。可用标题、列表、链接和图片。",
     translations: [{ language: "zh-CN", translation: "介绍 1" }],
   });
   await ensureField(token, "page_sections_translations", "intro2", "text", {}, {
-    interface: "input-multiline",
+    interface: "input-rich-text-html",
+    note: "补充正文，可留空。",
     translations: [{ language: "zh-CN", translation: "介绍 2" }],
+  });
+  await ensureField(token, "page_sections_translations", "image", "string", { max_length: 512 }, {
+    ...IMAGE_META,
+    note: "本语言板块图。留空则用板块上的共用图。",
+    translations: [{ language: "zh-CN", translation: "本语言图片" }],
+  });
+  await ensureField(token, "page_sections_translations", "cta", "string", { max_length: 64 }, {
+    interface: "input",
+    width: "half",
+    note: "按钮文字，例如「查看服务」。没有按钮的板块可留空。",
+    translations: [{ language: "zh-CN", translation: "按钮文字" }],
   });
 
   await ensureAlias(token, "page_sections", "translations", {
@@ -546,7 +559,7 @@ async function main() {
       enableSelect: false,
       template: "{{language}} · {{title}}",
     },
-    note: "按语言填写简介、数据和介绍。一般保留中文 zh、英文 en 各一条。",
+    note: "按语言填写简介、正文和图片。一般保留中文 zh、英文 en 各一条。",
     translations: [{ language: "zh-CN", translation: "多语言内容" }],
   });
   await ensureAlias(token, "page_sections", "children", {

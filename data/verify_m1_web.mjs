@@ -87,7 +87,7 @@ const series = seriesArr?.[0] ?? null;
 
 const products = await dGet("/items/product", {
   "filter[status][_eq]": "published",
-  fields: "id,order_no,title,translations.language,translations.slug,translations.name",
+  fields: "id,order_no,title,translations.language,translations.slug,translations.name,media_links.file_id,media_links.media_id.file_id",
   limit: "20",
 });
 const product = products?.find((item) => item.translations?.some((t) => t.language === "en")) ?? null;
@@ -168,6 +168,10 @@ if (series) {
   const r = await wGet(`/en/product/series/${mc}`);
   check(`/en 系列页 200 (${mc})`, r.status === 200, `[${r.status}]`);
   check("系列页有变体表", r.text.includes("Variants"), "");
+  check("系列表不把旧库选项码标为节距", !/<th[^>]*>Pitch<\/th>/.test(r.text), "");
+  if (r.text.includes("Related Series")) {
+    check("相关系列在参数表下方整行展示", r.text.includes('id="related-series"'), "");
+  }
   check("系列页有 Product JSON-LD", r.text.includes('"@type":"Product"'), "");
 
   const zhLangs = series.translations.map((t) => t.language);
@@ -191,8 +195,98 @@ if (product) {
   check(`/en 产品详情 200 (${orderNo})`, r.status === 200, `[${r.status}]`);
   check("产品详情显示订货号", r.text.includes(orderNo), "");
   check("产品详情包含 Product JSON-LD", r.text.includes('"@type":"Product"'), "");
+  check("产品详情有带订货号的咨询入口", r.text.includes("subject=DEGSON%20" + encodeURIComponent(orderNo)), "");
+  check("产品详情能返回分类选型", r.text.includes("/en/#products"), "");
+  check("产品详情技术信息独立展示", r.text.includes('id="technical-details"'), "");
+  check("产品详情有系列入口", r.text.includes("/en/product/series/"), "");
+  check("缺少 SKU 实物图时标注系列参考图", r.text.includes("Series reference image"), "");
+  check("旧网页截图不作为 SKU 主图", !r.text.includes(`/api/product-media/${orderNo}/`), "");
+  const mediaId = product.media_links?.map((link) => link.file_id ?? link.media_id?.file_id).find(Boolean);
+  if (mediaId) {
+    const image = await fetch(`${WEB}/api/product-media/${encodeURIComponent(orderNo)}/${mediaId}`);
+    check("已发布 SKU 图片可加载", image.status === 200 && (image.headers.get("content-type") ?? "").startsWith("image/"), `[${image.status}]`);
+    const unrelated = await fetch(`${WEB}/api/product-media/__invalid__/${mediaId}`);
+    check("图片不能通过其他订货号读取", unrelated.status === 404, `[${unrelated.status}]`);
+  }
   const missing = await wGet("/en/product/__no_such_order_no__");
   check("不存在的产品详情 → 404", missing.status === 404, `[${missing.status}]`);
+}
+
+console.log("\nC2.1 SKU 资料试点样本");
+{
+  const first = await wGet("/en/product/10010012354");
+  check("试点 SKU 10010012354 200", first.status === 200, `[${first.status}]`);
+  check("试点页显示技术参数", first.text.includes('id="specifications"') && first.text.includes("Rated current"), "");
+  check("试点页显示认证", first.text.includes('id="certifications"') && first.text.includes("UL"), "");
+  check("试点页显示资料下载且不用内部码", first.text.includes('id="downloads"') && first.text.includes("Data sheet") && !first.text.includes("datasheet"), "");
+  check("试点页显示关联系列", first.text.includes('id="related"'), "");
+  check("空附件模块不出现", !first.text.includes('id="accessories"'), "");
+  const second = await wGet("/en/product/29010000012");
+  check("试点 SKU 29010000012 200", second.status === 200, `[${second.status}]`);
+  check("第二条有认证或资料", second.text.includes('id="certifications"') || second.text.includes('id="downloads"'), "");
+  const zhPage = await wGet("/zh/product/10010012354");
+  check(
+    "无中文翻译时试点 SKU 收敛到英文页",
+    zhPage.status === 307 && (zhPage.location ?? "").includes("/en/product/10010012354"),
+    `[${zhPage.status}] → ${zhPage.location ?? ""}`,
+  );
+  const fileMatch = first.text.match(/\/api\/product-document\/10010012354\/([0-9a-f-]+)/i);
+  if (fileMatch) {
+    const ok = await fetch(`${WEB}/api/product-document/10010012354/${fileMatch[1]}`);
+    check("资料下载 attachment", ok.status === 200 && (ok.headers.get("content-disposition") ?? "").includes("attachment"), `[${ok.status}]`);
+    const wrong = await fetch(`${WEB}/api/product-document/29010000012/${fileMatch[1]}`);
+    check("资料不能串 SKU 下载", wrong.status === 404, `[${wrong.status}]`);
+  }
+}
+
+// ---------- 4.2 方案到真实产品分类 ----------
+console.log("\nC3. 方案到产品分类");
+if (l1) {
+  const slug = pick(l1, "en").slug;
+  const r = await wGet("/en/solutions");
+  check("方案页 200", r.status === 200, `[${r.status}]`);
+  check("方案页有真实一级分类链接", r.text.includes(`/en/product/category/${slug}`), "");
+  check("方案页可继续进入服务", r.text.includes("/en/services"), "");
+  const sections = await dGet("/items/page_sections", {
+    "filter[page_slug][_eq]": "solutions",
+    "filter[status][_eq]": "published",
+    fields: "code,translations.language,translations.title",
+    limit: "20",
+  });
+  for (const code of ["sol-products", "sol-support"]) {
+    const title = sections?.find((section) => section.code === code)?.translations?.find((translation) => translation.language === "en")?.title;
+    check(`方案页文案来自后台 ${code}`, Boolean(title) && r.text.includes(title), title ?? "missing CMS content");
+  }
+}
+
+console.log("\nC4. 服务 / 关于 / 方案 CMS 正文");
+{
+  const pages = await dGet("/items/site_pages", {
+    fields: "slug,translations.language,translations.title,translations.body",
+    limit: "10",
+  });
+  const snippetOf = (body) =>
+    String(body ?? "")
+      .replace(/<[^>]+>/g, " ")
+      .split(/\s+/)
+      .map((part) => part.trim())
+      .find((part) => part.length >= 6);
+  for (const slug of ["services", "about", "solutions"]) {
+    for (const lang of ["en", "zh"]) {
+      const path = `/${lang}/${slug}`;
+      const row = pages?.find((page) => page.slug === slug);
+      const t = row?.translations?.find((item) => item.language === lang);
+      const page = await wGet(path);
+      check(`${path} 200`, page.status === 200, `[${page.status}]`);
+      if (t?.title) {
+        check(`${path} 标题来自后台`, page.text.includes(t.title), t.title);
+      }
+      const snippet = snippetOf(t?.body);
+      if (snippet) {
+        check(`${path} 正文来自后台`, page.text.includes(snippet), snippet.slice(0, 40));
+      }
+    }
+  }
 }
 
 // ---------- 5. 新闻 ----------
@@ -276,6 +370,35 @@ console.log("\nF. metadata 在 <head> 内（GEO 关键）");
       `${bot} 拿到 head 内 title+canonical`,
       allOk,
       allOk ? `(${targets.length} 个页型)` : `失败于 ${detail.join(", ")}`
+    );
+  }
+}
+
+console.log("\nG. 列表页 JSON-LD（PRD v3 GEO）");
+{
+  for (const p of ["/en", "/en/news", "/en/about"]) {
+    const r = await wGet(p);
+    check(
+      `${p} 含 JSON-LD`,
+      r.status === 200 && r.text.includes("application/ld+json"),
+      `[${r.status}]`
+    );
+  }
+}
+
+console.log("\nH. 浏览器标题不重复品牌");
+{
+  const titleOf = (html) => {
+    const m = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    return (m?.[1] ?? "").trim();
+  };
+  for (const p of ["/zh/services", "/en/services", "/zh/about", "/zh/news", "/en", "/zh/solutions"]) {
+    const r = await wGet(p);
+    const title = titleOf(r.text);
+    check(
+      `${p} title 不重复 DEGSON`,
+      r.status === 200 && Boolean(title) && !/DEGSON\s*\|\s*DEGSON/i.test(title) && !/\|\s*DEGSON\s*\|/i.test(title),
+      title || `[${r.status}]`
     );
   }
 }

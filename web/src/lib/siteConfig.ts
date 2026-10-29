@@ -14,11 +14,37 @@ export interface SitePolicy {
   mode: SiteMode;
   localePath(lang: Lang, path?: string): string;
   siteUrl(lang: Lang, path?: string): string;
+  siteHref(lang: Lang, path?: string): string;
+}
+
+/** 把误写成 http://localhost:3000/... 的地址收成路径，避免同事点进自己的电脑。 */
+export function toSitePath(path = "/"): string {
+  const raw = (path || "/").trim() || "/";
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      const combined = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      return combined.startsWith("/") ? combined : `/${combined}`;
+    } catch {
+      return raw.startsWith("/") ? raw : `/${raw}`;
+    }
+  }
+  return raw.startsWith("/") ? raw : `/${raw}`;
+}
+
+function stripLangPrefix(path: string): string {
+  const matched = path.match(/^\/(en|zh)(?=\/|$|\?|#)/);
+  if (!matched) return path || "/";
+  const rest = path.slice(matched[0].length);
+  if (!rest) return "/";
+  if (rest.startsWith("#") || rest.startsWith("?")) return `/${rest}`;
+  return rest.startsWith("/") ? rest : `/${rest}`;
 }
 
 function normalizePath(path = "/"): string {
-  if (!path || path === "/") return "/";
-  return path.startsWith("/") ? path : `/${path}`;
+  const value = toSitePath(path);
+  if (!value || value === "/") return "/";
+  return value;
 }
 
 function trimOrigin(origin: string): string {
@@ -30,7 +56,10 @@ export function createSitePolicy(options: SitePolicyOptions): SitePolicy {
   const cnSiteOrigin = trimOrigin(options.cnSiteOrigin);
 
   function localePath(lang: Lang, path = "/"): string {
-    const normalized = normalizePath(path);
+    let normalized = normalizePath(path);
+    if (options.mode === "demo-path") {
+      normalized = stripLangPrefix(normalized);
+    }
     if (options.mode === "production" && (lang === DEFAULT_LANG || lang === "zh")) {
       return normalized;
     }
@@ -47,7 +76,11 @@ export function createSitePolicy(options: SitePolicyOptions): SitePolicy {
     return `${origin}${localePath(lang, path)}`;
   }
 
-  return { mode: options.mode, localePath, siteUrl };
+  function siteHref(lang: Lang, path = "/"): string {
+    return options.mode === "demo-path" ? localePath(lang, path) : siteUrl(lang, path);
+  }
+
+  return { mode: options.mode, localePath, siteUrl, siteHref };
 }
 
 export function getSitePolicy(): SitePolicy {

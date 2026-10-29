@@ -14,12 +14,20 @@ const BUSINESS_COLLECTIONS = [
   "series_translations",
   "product",
   "product_translations",
+  "product_spec",
+  "product_spec_translations",
+  "product_certification",
+  "product_certification_row",
+  "product_document",
+  "product_relation",
   "news",
   "news_translations",
   "site_pages",
   "site_pages_translations",
   "home_blocks",
   "home_blocks_translations",
+  "home_banner",
+  "home_banner_translations",
   "page_sections",
   "page_sections_translations",
   "social_links",
@@ -29,25 +37,34 @@ const BUSINESS_FIELD_ALLOWLISTS = {
   category: ["id", "level", "parent_id", "image", "sort", "status", "translations"],
   category_translations: [
     "id", "language", "category_id", "name", "slug", "seo_title",
-    "seo_description", "h1", "short_description", "description",
+    "seo_description", "seo_keywords", "h1", "short_description", "description",
   ],
   series: ["id", "matecode", "category_id", "image", "sort", "status", "translations"],
   series_translations: [
     "id", "language", "series_id", "name", "slug", "seo_title",
-    "seo_description", "h1", "short_description", "description",
+    "seo_description", "seo_keywords", "h1", "short_description", "description",
   ],
   product: [
     "id", "order_no", "title", "series_id", "poles", "pitch",
     "combined_title", "status", "translations", "media_links",
+    "specifications", "certifications", "documents", "related_products",
+    "product_media_group", "product_technical_group", "product_certification_group",
+    "product_document_group", "product_relation_group",
   ],
+  product_spec: ["id", "product_id", "kind", "group_key", "sort", "status", "legacy_id", "translations"],
+  product_spec_translations: ["id", "product_spec_id", "language", "group_title", "label", "value", "unit"],
+  product_certification: ["id", "product_id", "code", "logo_file_id", "sort", "status", "legacy_id", "rows"],
+  product_certification_row: ["id", "certification_id", "language", "label", "value_1", "value_2", "value_3", "sort", "legacy_id"],
+  product_document: ["id", "product_id", "language", "kind", "title", "file_id", "sort", "status", "legacy_id"],
+  product_relation: ["id", "product_id", "target_product_id", "target_series_id", "kind", "sort", "status", "legacy_id"],
   product_translations: [
     "id", "language", "product_id", "name", "slug", "seo_title",
-    "seo_description", "h1", "short_description", "description",
+    "seo_description", "seo_keywords", "h1", "short_description", "description",
   ],
   news: ["id", "cover_image", "publish_date", "sort", "status", "translations"],
   news_translations: [
     "id", "language", "news_id", "name", "slug", "seo_title",
-    "seo_description", "h1", "short_description", "description",
+    "seo_description", "seo_keywords", "h1", "short_description", "description",
   ],
   site_pages: [
     "id", "slug", "status", "sort", "cover_image",
@@ -55,15 +72,22 @@ const BUSINESS_FIELD_ALLOWLISTS = {
   ],
   site_pages_translations: [
     "id", "language", "site_pages_id", "title", "summary", "body",
-    "seo_title", "seo_description",
-    "panel_1_title", "panel_1_text", "panel_2_title", "panel_2_text",
-    "panel_3_title", "panel_3_text",
+    "seo_title", "seo_description", "seo_keywords", "h1",
+    "cover_image", "panel_1_title", "panel_1_text", "panel_1_image",
+    "panel_2_title", "panel_2_text", "panel_2_image",
+    "panel_3_title", "panel_3_text", "panel_3_image",
   ],
   home_blocks: [
     "id", "key", "label", "kind", "image", "link_path", "sort", "status", "translations",
   ],
   home_blocks_translations: [
     "id", "language", "home_blocks_id", "title", "text", "cta",
+  ],
+  home_banner: [
+    "id", "key", "label", "sort", "status", "link_path", "link_url", "image", "translations",
+  ],
+  home_banner_translations: [
+    "id", "language", "home_banner_id", "status", "tag", "title", "text", "cta", "image",
   ],
   page_sections: [
     "id", "page_slug", "parent_id", "list_title", "sort", "status", "image",
@@ -72,6 +96,7 @@ const BUSINESS_FIELD_ALLOWLISTS = {
   page_sections_translations: [
     "id", "language", "page_sections_id", "title", "intro",
     "stat1", "stat1_label", "stat2", "stat2_label", "intro1", "intro2",
+    "cta", "image",
   ],
   social_links: ["id", "platform", "label", "url", "sort", "status"],
   site_settings: [

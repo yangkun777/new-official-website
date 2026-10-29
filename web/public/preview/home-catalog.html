@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>方向 A · 白底工业目录</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --ink:#161616; --mute:#6a6a6a; --line:#e4e4e4; --red:#c8102e; --paper:#f7f7f5; }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: "IBM Plex Sans", sans-serif; color: var(--ink); background: #fff; }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+    header { display: flex; align-items: center; justify-content: space-between; height: 64px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: .08em; font-size: 14px; }
+    .tri { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 12px solid var(--red); }
+    nav { display: flex; gap: 28px; font-size: 13px; letter-spacing: .04em; color: #444; }
+    nav a:hover { color: var(--ink); }
+    .lang { font-size: 12px; color: var(--mute); }
+    .hero { display: grid; grid-template-columns: 1fr 1.15fr; min-height: 560px; border-bottom: 1px solid var(--line); }
+    .hero-copy { display: flex; flex-direction: column; justify-content: center; padding: 64px 32px 64px 0; }
+    .hero-copy p.k { font-size: 12px; letter-spacing: .18em; color: var(--mute); }
+    h1 { font-size: 52px; font-weight: 500; line-height: 1.08; letter-spacing: -.03em; margin-top: 18px; max-width: 11ch; }
+    .hero-copy .lead { margin-top: 20px; font-size: 16px; line-height: 1.55; color: #444; max-width: 36ch; }
+    .cta { margin-top: 32px; display: inline-flex; align-items: center; height: 44px; padding: 0 22px; background: var(--ink); color: #fff; font-size: 13px; letter-spacing: .06em; }
+    .hero-visual { background: var(--paper); display: flex; align-items: center; overflow: hidden; }
+    .hero-visual img { width: 100%; height: 100%; object-fit: cover; object-position: right center; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid var(--line); }
+    .stats div { padding: 28px 0; }
+    .stats div + div { border-left: 1px solid var(--line); padding-left: 32px; }
+    .stats strong { display: block; font-size: 28px; font-weight: 500; letter-spacing: -.02em; }
+    .stats span { display: block; margin-top: 6px; font-size: 13px; color: var(--mute); }
+    .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
+    .cat { background: #fff; min-height: 280px; display: grid; grid-template-columns: 1fr 1fr; }
+    .cat img { width: 100%; height: 280px; object-fit: contain; background: var(--paper); }
+    .cat .t { padding: 36px 28px; display: flex; flex-direction: column; justify-content: flex-end; }
+    .cat h2 { font-size: 22px; font-weight: 500; }
+    .cat p { margin-top: 8px; font-size: 13px; color: var(--mute); }
+    .note { position: fixed; top: 12px; left: 12px; z-index: 9; background: var(--ink); color: #fff; font-size: 11px; letter-spacing: .12em; padding: 6px 10px; }
+  </style>
+</head>
+<body>
+  <div class="note">方向 A · 白底工业目录 · 预览稿</div>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#"><span class="tri"></span>DEGSON</a>
+      <nav>
+        <a href="#">产品</a>
+        <a href="#">方案</a>
+        <a href="#">服务</a>
+        <a href="#">关于</a>
+      </nav>
+      <span class="lang">EN &nbsp;|&nbsp; <b>中文</b></span>
+    </header>
+  </div>
+  <div class="hero wrap" style="padding: 0; max-width: none; display: grid; grid-template-columns: minmax(280px, 42%) 1fr;">
+    <div class="hero-copy wrap" style="max-width: none; padding-left: max(32px, calc((100vw - 1180px) / 2));">
+      <p class="k">INDUSTRIAL CONNECTORS</p>
+      <h1>可靠连接，始于订货号。</h1>
+      <p class="lead">端子、圆形连接器与重载接口。按系列选型，按规格确认。</p>
+      <a class="cta" href="#">浏览产品目录</a>
+    </div>
+    <div class="hero-visual">
+      <img src="/images/marketing/circular-connectors.jpg" alt="圆形连接器" />
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="stats">
+      <div><strong>40,000+</strong><span>可设计选用规格</span></div>
+      <div><strong>UL / VDE / CE</strong><span>面向全球设备认证</span></div>
+      <div><strong>6 大系列</strong><span>端子到储能与充电接口</span></div>
+    </div>
+  </div>
+  <div class="cats">
+    <article class="cat">
+      <img src="/images/marketing/home-push.jpg" alt="PCB 端子" />
+      <div class="t">
+        <h2>接线端子</h2>
+        <p>PCB / 导轨 / 栅栏式，覆盖柜内与板级接线。</p>
+      </div>
+    </article>
+    <article class="cat">
+      <img src="/images/marketing/home-thumb-1.png" alt="插拔连接器" />
+      <div class="t">
+        <h2>插拔与圆形</h2>
+        <p>现场锁紧、防水与多芯组合，按应用选系列。</p>
+      </div>
+    </article>
+  </div>
+</body>
+</html>

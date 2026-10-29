@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
+import { IBM_Plex_Sans, Noto_Sans_SC } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getSiteSettings, getSocialLinks, localizeSiteCopy } from "@/lib/repo";
 import { LANGS, htmlLang, isLang, type Lang } from "@/lib/lang";
-import { SITE_ORIGIN, siteUrl } from "@/lib/site";
+import { headers } from "next/headers";
+import { localePath, publicOriginFromHeaders, siteUrl } from "@/lib/site";
 import { serializeJsonLd } from "@/lib/seo";
 
-const roboto = Roboto({
-  variable: "--font-roboto",
+const plex = IBM_Plex_Sans({
+  variable: "--font-plex",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+const noto = Noto_Sans_SC({
+  variable: "--font-noto",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   display: "swap",
@@ -23,29 +30,32 @@ export function generateStaticParams() {
   return LANGS.map((lang) => ({ lang }));
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_ORIGIN),
-  title: { default: "DEGSON", template: "%s | DEGSON" },
-  description:
-    "DEGSON industrial connection solutions — terminal blocks and connectors.",
-  openGraph: {
-    type: "website",
-    siteName: "DEGSON",
-    title: "DEGSON",
+export async function generateMetadata(): Promise<Metadata> {
+  const origin = publicOriginFromHeaders(await headers());
+  return {
+    metadataBase: new URL(origin),
+    title: { default: "DEGSON", template: "%s | DEGSON" },
     description:
       "DEGSON industrial connection solutions — terminal blocks and connectors.",
-    url: SITE_ORIGIN,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "DEGSON",
-    description:
-      "DEGSON industrial connection solutions — terminal blocks and connectors.",
-  },
-  robots: IS_PRODUCTION
-    ? { index: true, follow: true }
-    : { index: false, follow: false },
-};
+    openGraph: {
+      type: "website",
+      siteName: "DEGSON",
+      title: "DEGSON",
+      description:
+        "DEGSON industrial connection solutions — terminal blocks and connectors.",
+      url: origin,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "DEGSON",
+      description:
+        "DEGSON industrial connection solutions — terminal blocks and connectors.",
+    },
+    robots: IS_PRODUCTION
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
+  };
+}
 
 export default async function LangLayout({
   children,
@@ -66,31 +76,41 @@ export default async function LangLayout({
   const siteName = copy.siteName;
   const siteDescription = copy.siteDescription ?? "";
   const footerText = copy.footerText;
+  const origin = publicOriginFromHeaders(await headers());
+  const abs = (code: Lang, path = "/") =>
+    IS_PRODUCTION ? siteUrl(code, path) : `${origin}${localePath(code, path)}`;
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "@id": `${siteUrl("en", "/")}#organization`,
+    "@id": `${abs("en")}#organization`,
     name: siteName,
-    url: siteUrl("en", "/"),
+    url: abs("en"),
     description: siteDescription,
   };
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${siteUrl(lang, "/")}#website`,
+    "@id": `${abs(lang)}#website`,
     name: siteName,
-    url: siteUrl(lang, "/"),
+    url: abs(lang),
     description: siteDescription,
     inLanguage: htmlLang(lang),
-    publisher: { "@id": `${siteUrl("en", "/")}#organization` },
+    publisher: { "@id": `${abs("en")}#organization` },
   };
 
   return (
     <html
       lang={htmlLang(lang)}
-      className={`${roboto.variable} h-full antialiased`}
+      className={`${plex.variable} ${noto.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('degson-theme');if(t==='blue'||t==='teal')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();",
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd) }}
@@ -103,7 +123,7 @@ export default async function LangLayout({
       <body className="flex min-h-full flex-col bg-white text-slate-900">
         <SiteHeader siteName={siteName} lang={lang} />
         <main className="flex-1">{children}</main>
-        <SiteFooter text={footerText} social={social} />
+        <SiteFooter text={footerText} social={social} lang={lang} />
       </body>
     </html>
   );

@@ -139,7 +139,7 @@ const _hoisted_2 = {
   class: "preview-card"
 };
 const _hoisted_3 = { class: "preview-stage" };
-const _hoisted_4 = ["src", "alt"];
+const _hoisted_4 = ["src", "alt", "referrerpolicy"];
 const _hoisted_5 = {
   key: 1,
   class: "preview-loading"
@@ -171,6 +171,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
                   key: 0,
                   src: $setup.previewUrl,
                   alt: $setup.fileName || '产品图片',
+                  referrerpolicy: "no-referrer",
                   onError: _cache[3] || (_cache[3] = (...args) => ($setup.onPreviewError && $setup.onPreviewError(...args)))
                 }, null, 40 /* PROPS, NEED_HYDRATION */, _hoisted_4))
               : ($setup.previewFailed)

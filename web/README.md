@@ -14,6 +14,8 @@ Copy-Item .env.example .env.local
 
 按本机环境填写 `DIRECTUS_TOKEN`。`.env.local` 只保存在本地，不能提交到 Git。
 
+按需刷新内容缓存时，还需在 `.env.local` 中设置至少 32 字符的随机 `REVALIDATE_SECRET`，并在 `cms/.env` 写入同一密钥。`POST /api/revalidate` 只接收 `Authorization: Bearer <密钥>` 和 `{ "collection": "news_translations" }` 这类集合白名单请求；接口按 `web/src/lib/cacheTags.ts` 映射调用 Next `revalidateTag`。Directus 保存后由 `cms/extensions/revalidate-hook` 异步通知前台（失败不阻挡后台保存）。不要启用会请求 localhost 的 Directus Flow。本地可运行 `node ../data/verify_revalidation_http.mjs` 与 `node ../data/verify_revalidation_hook_run.mjs`。
+
 默认 Demo URL 规则：
 
 ```text

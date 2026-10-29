@@ -47,6 +47,8 @@ export interface CatLite {
   level: number;
 }
 
+export interface CategoryPathNode extends CatLite {}
+
 /** 分类详情（含父级链，用于面包屑） */
 export interface Category extends CatLite {
   description: string | null;
@@ -56,7 +58,10 @@ export interface Category extends CatLite {
   status: string;
   seo_title: string | null;
   seo_description: string | null;
+  seo_keywords: string | null;
+  h1: string | null;
   parent_id: (CatLite & { parent_id: CatLite | null }) | null;
+  categoryPath: CategoryPathNode[];
 }
 
 /**
@@ -72,6 +77,7 @@ export interface SubCategoryCard {
   description: string | null;
   lang: Lang;
   fallback: boolean;
+  categoryPath: CategoryPathNode[];
   /** CMS 主表真实更新时间；为空时 sitemap 不输出 lastmod。 */
   updated_at?: string | null;
 }
@@ -79,11 +85,13 @@ export interface SubCategoryCard {
 export interface SeriesListItem {
   id: number;
   name: string;
+  slug: string;
   matecode: string;
   image: string | null;
   description: string | null;
   lang: Lang;
   fallback: boolean;
+  categoryPath: CategoryPathNode[];
   /** CMS 主表真实更新时间；为空时 sitemap 不输出 lastmod。 */
   updated_at?: string | null;
 }
@@ -91,12 +99,16 @@ export interface SeriesListItem {
 export interface Series {
   id: number;
   name: string;
+  slug: string;
   matecode: string;
   description: string | null;
   short_description: string | null;
   image: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  seo_keywords: string | null;
+  h1: string | null;
+  categoryPath: CategoryPathNode[];
   category_id: {
     id: number;
     name: string;
@@ -135,6 +147,7 @@ export interface ProductMedia {
 
 export interface ProductDetail {
   id: number;
+  lang: Lang;
   order_no: string;
   title: string | null;
   poles: string | null;
@@ -147,7 +160,9 @@ export interface ProductDetail {
   description: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  seo_keywords: string | null;
   media: ProductMedia[];
+  series: { matecode: string; slug: string; name: string; lang: Lang; image: string | null; categoryPath: CategoryPathNode[] } | null;
 }
 
 export interface Crumb {
